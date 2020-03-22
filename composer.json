@@ -3,7 +3,7 @@
     "description": "This is a authentication module for authenticating a user against a SQL database",
     "type": "simplesamlphp-module",
     "keywords": ["simplesamlphp", "sqlauth"],
-    "license": "LGPL-3.0-or-later",
+    "license": "LGPL-2.1-or-later",
     "authors": [
         {
             "name": "Olav Morken",
