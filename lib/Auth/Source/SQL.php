@@ -22,28 +22,33 @@ class SQL extends \SimpleSAML\Module\core\Auth\UserPassBase
 {
     /**
      * The DSN we should connect to.
+     * @var string
      */
     private $dsn;
 
     /**
      * The username we should connect to the database with.
+     * @var string
      */
     private $username;
 
     /**
      * The password we should connect to the database with.
+     * @var string
      */
     private $password;
 
     /**
      * The options that we should connect to the database with.
+     * @var array
      */
-    private $options;
+    private $options = [];
 
     /**
      * The query we should use to retrieve the attributes for the user.
      *
      * The username and password will be available as :username and :password.
+     * @var string
      */
     private $query;
 
