@@ -1,13 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace SimpleSAML\Module\sqlauth\Auth\Source;
 
 use Exception;
 use PDO;
 use PDOException;
+use SimpleSAML\Assert\Assert;
 use SimpleSAML\Error;
 use SimpleSAML\Logger;
-use Webmozart\Assert\Assert;
 
 /**
  * Simple SQL authentication source
@@ -24,25 +26,25 @@ class SQL extends \SimpleSAML\Module\core\Auth\UserPassBase
      * The DSN we should connect to.
      * @var string
      */
-    private $dsn;
+    private string $dsn;
 
     /**
      * The username we should connect to the database with.
      * @var string
      */
-    private $username;
+    private string $username;
 
     /**
      * The password we should connect to the database with.
      * @var string
      */
-    private $password;
+    private string $password;
 
     /**
      * The options that we should connect to the database with.
      * @var array
      */
-    private $options = [];
+    private array $options = [];
 
     /**
      * The query we should use to retrieve the attributes for the user.
@@ -50,7 +52,7 @@ class SQL extends \SimpleSAML\Module\core\Auth\UserPassBase
      * The username and password will be available as :username and :password.
      * @var string
      */
-    private $query;
+    private string $query;
 
     /**
      * Constructor for this authentication source.
