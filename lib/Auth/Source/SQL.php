@@ -100,8 +100,11 @@ class SQL extends \SimpleSAML\Module\core\Auth\UserPassBase
         try {
             $db = new PDO($this->dsn, $this->username, $this->password, $this->options);
         } catch (PDOException $e) {
+            // Obfuscate the password if it's part of the dsn
+            $obfuscated_dsn =  preg_replace('/(user|password)=(.*?([;]|$))/', '${1}=***', $this->dsn);
+
             throw new \Exception('sqlauth:' . $this->authId . ': - Failed to connect to \'' .
-                $this->dsn . '\': ' . $e->getMessage());
+                $obfuscated_dsn . '\': ' . $e->getMessage());
         }
 
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
