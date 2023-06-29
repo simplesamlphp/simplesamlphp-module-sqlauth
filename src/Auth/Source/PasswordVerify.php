@@ -84,7 +84,7 @@ class PasswordVerify extends SQL
      * @param array  $forbiddenAttributes An array of attributes to never return
      * @return array  Associative array with the users attributes.
      */
-    protected function extractAttributes( $data, $forbiddenAttributes = array() )
+    protected function extractAttributes($data, $forbiddenAttributes = array()): array
     {
         $attributes = [];
         foreach ($data as $row) {
