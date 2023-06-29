@@ -10,6 +10,17 @@ use PDOException;
 use SimpleSAML\Assert\Assert;
 use SimpleSAML\Error;
 use SimpleSAML\Logger;
+use SimpleSAML\Module\sqlauth\Auth\Source\SQL;
+
+use function array_key_exists;
+use function array_keys;
+use function count;
+use function implode;
+use function in_array;
+use function is_null;
+use function password_verify;
+use function sprintf;
+use function strval;
 
 /**
  * Simple SQL authentication source
@@ -38,12 +49,12 @@ use SimpleSAML\Logger;
  * @package SimpleSAMLphp
  */
 
-class PasswordVerify extends \SimpleSAML\Module\sqlauth\Auth\Source\SQL
+class PasswordVerify extends SQL
 {
     /**
      * The column in the result set containing the passwordhash.
      */
-    private $passwordhashcolumn;
+    protected ?string $passwordhashcolumn = null;
 
     /**
      * Constructor for this authentication source.
@@ -53,16 +64,14 @@ class PasswordVerify extends \SimpleSAML\Module\sqlauth\Auth\Source\SQL
      */
     public function __construct(array $info, array $config)    
     {
-        assert(is_array($info));
-        assert(is_array($config));
-
         // Call the parent constructor first, as required by the interface
         parent::__construct($info, $config);
 
-        if( array_key_exists('passwordhashcolumn', $config )) {
+        if (array_key_exists('passwordhashcolumn', $config)) {
             $this->passwordhashcolumn = $config['passwordhashcolumn'];
         }
-        if( !$this->passwordhashcolumn ) {
+
+        if ($this->passwordhashcolumn === null) {
             $this->passwordhashcolumn = 'passwordhash';
         }
     }
@@ -88,7 +97,7 @@ class PasswordVerify extends \SimpleSAML\Module\sqlauth\Auth\Source\SQL
                 }
                
 
-                $value = (string) $value;
+                $value = strval($value);
 
                 if (!array_key_exists($name, $attributes)) {
                     $attributes[$name] = [];
@@ -122,42 +131,53 @@ class PasswordVerify extends \SimpleSAML\Module\sqlauth\Auth\Source\SQL
      */
     protected function login(string $username, string $password): array
     {
-        assert(is_string($username));
-        assert(is_string($password));
-
-
         $db = $this->connect();
         
         try {
             $sth = $db->prepare($this->query);
-        } catch (\PDOException $e) {
-            throw new \Exception('sqlauth:'.$this->authId.
-                ': - Failed to prepare query: '.$e->getMessage());
+        } catch (PDOException $e) {
+            throw new Exception(sprintf(
+                'sqlauth:%s: - Failed to prepare query: %s',
+                $this->authId,
+                $e->getMessage(),
+            ));
         }
 
 
         try {
             $sth->execute(['username' => $username]);
-        } catch (\PDOException $e) {
-            throw new \Exception('sqlauth:'.$this->authId.
-                ': - Failed to execute sql: '.$this->query.' query: '.$e->getMessage());
+        } catch (PDOException $e) {
+            throw new Exception(sprintf(
+                'sqlauth:%s: - Failed to execute sql: %s query: %s',
+                $this->authId,
+                $this->query,
+                $e->getMessage(),
+            ));
         }
 
         try {
-            $data = $sth->fetchAll(\PDO::FETCH_ASSOC);
-        } catch (\PDOException $e) {
-            throw new \Exception('sqlauth:'.$this->authId.
-                ': - Failed to fetch result set: '.$e->getMessage());
+            $data = $sth->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            throw new Exception(sprintf(
+                'sqlauth:%s: - Failed to fetch result set: %s',
+                $this->authId,
+                $e->getMessage(),
+            ));
         }
 
-        \SimpleSAML\Logger::info('sqlauth:'.$this->authId.': Got '.count($data).
-            ' rows from database');
+        Logger::info(sprintf(
+            'sqlauth:%s : Got %d rows from database',
+            $this->authId,
+            count($data),
+        ));
 
         if (count($data) === 0) {
             // No rows returned - invalid username/password
-            \SimpleSAML\Logger::error('sqlauth:'.$this->authId.
-                ': No rows in result set. Probably wrong username/password.');
-            throw new \SimpleSAML\Error\Error('WRONGUSERPASS');
+            Logger::error(sprintf(
+                'sqlauth:%s: No rows in result set. Probably wrong username/password.',
+                $this->authId,
+            ));
+            throw new Error\Error('WRONGUSERPASS');
         }
 
         /**
@@ -171,15 +191,21 @@ class PasswordVerify extends \SimpleSAML\Module\sqlauth\Auth\Source\SQL
             if (!array_key_exists($this->passwordhashcolumn, $row)
                 || is_null($row[$this->passwordhashcolumn]))
             {
-                \SimpleSAML\Logger::error('sqlauth:'.$this->authId.
-                                          ': column ' . $this->passwordhashcolumn . ' must be in every result tuple.');
-                throw new \SimpleSAML\Error\Error('WRONGUSERPASS');
+                Logger::error(sprintf(
+                    'sqlauth:%s: column %s must be in every result tuple.',
+                    $this->authId,
+                    $this->passwordhashcolumn,
+                ));
+                throw new Error\Error('WRONGUSERPASS');
             }
-            if( $pwhash ) {
-                if( $pwhash != $row[$this->passwordhashcolumn] ) {
-                    \SimpleSAML\Logger::error('sqlauth:'.$this->authId.
-                                              ': column ' . $this->passwordhashcolumn . ' must be THE SAME in every result tuple.');
-                    throw new \SimpleSAML\Error\Error('WRONGUSERPASS');
+            if ($pwhash) {
+                if ($pwhash !== $row[$this->passwordhashcolumn]) {
+                    Logger::error(sprintf(
+                        'sqlauth:%s: column %s must be THE SAME in every result tuple.',
+                        $this->authId,
+                        $this->passwordhashcolumn,
+                    ));
+                    throw new Error\Error('WRONGUSERPASS');
                 }
             }
             $pwhash = $row[$this->passwordhashcolumn];
@@ -188,11 +214,14 @@ class PasswordVerify extends \SimpleSAML\Module\sqlauth\Auth\Source\SQL
          * This should never happen as the count(data) test above would have already thrown.
          * But checking twice doesn't hurt.
          */
-        if( is_null($pwhash)) {
-            if( $pwhash != $row[$this->passwordhashcolumn] ) {
-                \SimpleSAML\Logger::error('sqlauth:'.$this->authId.
-                                          ': column ' . $this->passwordhashcolumn . ' does not contain a password hash.');
-                throw new \SimpleSAML\Error\Error('WRONGUSERPASS');
+        if (is_null($pwhash)) {
+            if ($pwhash !== $row[$this->passwordhashcolumn]) {
+                Logger::error(sprintf(
+                    'sqlauth:%s: column %s does not contain a password hash.',
+                    $this->authId,
+                    $this->passwordhashcolumn,
+                ));
+                throw new Error\Error('WRONGUSERPASS');
             }
         }
 
@@ -200,16 +229,19 @@ class PasswordVerify extends \SimpleSAML\Module\sqlauth\Auth\Source\SQL
          * VERIFICATION!
          * Now to check if the password the user supplied is actually valid
          */
-        if( !password_verify( $password, $pwhash )) {
-            \SimpleSAML\Logger::error('sqlauth:'.$this->authId. ': password is incorrect.');
-            throw new \SimpleSAML\Error\Error('WRONGUSERPASS');
+        if (!password_verify($password, $pwhash)) {
+            Logger::error(sprintf('sqlauth:%s: password is incorrect.', $this->authId));
+            throw new Error\Error('WRONGUSERPASS');
         }
 
         
-        $attributes = $this->extractAttributes( $data, array($this->passwordhashcolumn) );
+        $attributes = $this->extractAttributes($data, [$this->passwordhashcolumn]);
 
-        \SimpleSAML\Logger::info('sqlauth:'.$this->authId.': Attributes: '.
-            implode(',', array_keys($attributes)));
+        Logger::info(sprintf(
+            'sqlauth:%s: Attributes: %s',
+            $this->authId,
+            implode(',', array_keys($attributes)),
+        ));
 
         return $attributes;
     }
