@@ -54,7 +54,7 @@ class PasswordVerify extends SQL
     /**
      * The column in the result set containing the passwordhash.
      */
-    protected ?string $passwordhashcolumn = null;
+    protected string $passwordhashcolumn = 'passwordhash';
 
     /**
      * Constructor for this authentication source.
@@ -69,10 +69,6 @@ class PasswordVerify extends SQL
 
         if (array_key_exists('passwordhashcolumn', $config)) {
             $this->passwordhashcolumn = $config['passwordhashcolumn'];
-        }
-
-        if ($this->passwordhashcolumn === null) {
-            $this->passwordhashcolumn = 'passwordhash';
         }
     }
 
