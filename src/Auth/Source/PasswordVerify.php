@@ -30,9 +30,9 @@ use function strval;
  * password_verify() function to allow for example PASSWORD_ARGON2ID to be used
  * for verification.
  *
- * While this class has a query parameter as the SQL class does the meaning 
- * is different. The query for this class should return at least a column 
- * called passwordhash containing the hashed password which was generated 
+ * While this class has a query parameter as the SQL class does the meaning
+ * is different. The query for this class should return at least a column
+ * called passwordhash containing the hashed password which was generated
  * for example using
  *    password_hash('hello', PASSWORD_ARGON2ID );
  *
@@ -40,7 +40,7 @@ use function strval;
  *   password_verify($password, row['passwordhash'] );
  *
  * Unlike the SQL class the username is the only parameter passed to the SQL query,
- * the query can not perform password checks, they are performed by the PHP code 
+ * the query can not perform password checks, they are performed by the PHP code
  * in this class using password_verify().
  *
  * If there are other columns in the returned data they are assumed to be attributes
@@ -62,7 +62,7 @@ class PasswordVerify extends SQL
      * @param array $info  Information about this authentication source.
      * @param array $config  Configuration.
      */
-    public function __construct(array $info, array $config)    
+    public function __construct(array $info, array $config)
     {
         // Call the parent constructor first, as required by the interface
         parent::__construct($info, $config);
@@ -84,7 +84,7 @@ class PasswordVerify extends SQL
      * @param array  $forbiddenAttributes An array of attributes to never return
      * @return array  Associative array with the users attributes.
      */
-    protected function extractAttributes($data, $forbiddenAttributes = array()): array
+    protected function extractAttributes(array $data, array $forbiddenAttributes = []): array
     {
         $attributes = [];
         foreach ($data as $row) {
@@ -95,7 +95,6 @@ class PasswordVerify extends SQL
                 if (in_array($name, $forbiddenAttributes)) {
                     continue;
                 }
-               
 
                 $value = strval($value);
 
@@ -111,7 +110,7 @@ class PasswordVerify extends SQL
                 $attributes[$name][] = $value;
             }
         }
-        
+
         return $attributes;
     }
 
@@ -132,7 +131,7 @@ class PasswordVerify extends SQL
     protected function login(string $username, string $password): array
     {
         $db = $this->connect();
-        
+
         try {
             $sth = $db->prepare($this->query);
         } catch (PDOException $e) {
@@ -183,14 +182,15 @@ class PasswordVerify extends SQL
         /**
          * Sanity check, passwordhash must be in each resulting tuple and must have
          * the same value in every tuple.
-         * 
+         *
          * Note that $pwhash will contain the passwordhash value after this loop.
          */
         $pwhash = null;
         foreach ($data as $row) {
-            if (!array_key_exists($this->passwordhashcolumn, $row)
-                || is_null($row[$this->passwordhashcolumn]))
-            {
+            if (
+                !array_key_exists($this->passwordhashcolumn, $row)
+                || is_null($row[$this->passwordhashcolumn])
+            ) {
                 Logger::error(sprintf(
                     'sqlauth:%s: column %s must be in every result tuple.',
                     $this->authId,
@@ -234,7 +234,6 @@ class PasswordVerify extends SQL
             throw new Error\Error('WRONGUSERPASS');
         }
 
-        
         $attributes = $this->extractAttributes($data, [$this->passwordhashcolumn]);
 
         Logger::info(sprintf(
