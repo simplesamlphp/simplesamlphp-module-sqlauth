@@ -7,9 +7,19 @@ namespace SimpleSAML\Module\sqlauth\Auth\Source;
 use Exception;
 use PDO;
 use PDOException;
-use SimpleSAML\Assert\Assert;
 use SimpleSAML\Error;
 use SimpleSAML\Logger;
+use SimpleSAML\Module\core\Auth\UserPassBase;
+
+use function array_key_exists;
+use function array_keys;
+use function explode;
+use function implode;
+use function in_array;
+use function is_string;
+use function preg_replace;
+use function strtolower;
+use function var_export;
 
 /**
  * Simple SQL authentication source
@@ -20,7 +30,7 @@ use SimpleSAML\Logger;
  * @package SimpleSAMLphp
  */
 
-class SQL extends \SimpleSAML\Module\core\Auth\UserPassBase
+class SQL extends UserPassBase
 {
     /**
      * The DSN we should connect to.
@@ -103,7 +113,7 @@ class SQL extends \SimpleSAML\Module\core\Auth\UserPassBase
             // Obfuscate the password if it's part of the dsn
             $obfuscated_dsn =  preg_replace('/(user|password)=(.*?([;]|$))/', '${1}=***', $this->dsn);
 
-            throw new \Exception('sqlauth:' . $this->authId . ': - Failed to connect to \'' .
+            throw new Exception('sqlauth:' . $this->authId . ': - Failed to connect to \'' .
                 $obfuscated_dsn . '\': ' . $e->getMessage());
         }
 
