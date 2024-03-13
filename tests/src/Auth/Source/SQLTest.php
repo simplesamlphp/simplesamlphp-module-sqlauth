@@ -170,4 +170,23 @@ class SQLTest extends TestCase
             'groupname' => ['students'],
         ]);
     }
+
+    public function testMultiQuerySubsequentAppendSuccess(): void
+    {
+        // Correct username/password. Second query returns a row, third query appends one row
+        $this->config['query'] = [
+            "select givenName, email from users where uid=:username and password=:password",
+            "select groupname from usergroups where uid=:username and groupname like 'stud%'",
+            "select groupname from usergroups where uid=:username and groupname like '%sers'",
+        ]; 
+        $ret = (new SQLWrapper($this->info, $this->config))->callLogin('bob', 'password');
+        asort($ret);
+        asort($ret['groupname']);
+        $this->assertCount(3, $ret);
+        $this->assertEquals($ret, [
+            'email' => ['bob@example.com'],
+            'givenName' => ["Bob"],
+            'groupname' => ['students', 'users'],
+        ]);
+    }
 }
