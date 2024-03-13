@@ -166,7 +166,8 @@ class SQL extends UserPassBase
         $params = ['username' => $username, 'password' => $password];
         $attributes = [];
 
-        for ($x=0 ; $x < count($this->query) ; $x++) {
+        $numQueries = count($this->query);
+        for ($x=0 ; $x < $numQueries ; $x++) {
             try {
                 $sth = $db->prepare($this->query[$x]);
             } catch (PDOException $e) {
