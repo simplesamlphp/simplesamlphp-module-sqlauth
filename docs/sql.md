@@ -3,7 +3,6 @@
 
 This is a authentication module for authenticating a user against a SQL database.
 
-
 Options
 -------
 
@@ -14,13 +13,11 @@ Options
 `username`
 :   The username which should be used when connecting to the database server.
 
-
 `password`
 :   The password which should be used when connecting to the database server.
 
 `query`
 :   The SQL query or queries which should be used to authenticate the user and retrieve their attributes.
-
 
 Writing a Query / Queries
 -------------------------
@@ -29,7 +26,7 @@ A `query` can be either a single string with an SQL statement, or an array of qu
 
 Taking this example schema:
 
-```
+```sql
     CREATE TABLE users (
       uid VARCHAR(30) NOT NULL PRIMARY KEY,
       password TEXT NOT NULL,
@@ -47,7 +44,7 @@ Taking this example schema:
 
 a basic entry with a single SQL string in `authsources.php` might look like this (PostgreSQL, SHA512 of salt + password, base64 encoded with the salt stored in an independent column):
 
-```
+```php
     'example-sql' => [
         'sqlauth:SQL',
         'dsn' => 'pgsql:host=postgresql;port=5432;dbname=simplesaml',
@@ -61,15 +58,15 @@ It's worth repeating at this point that if authentication is unsuccessful (ie. t
 
 | Attribute Name | Attribute Value |
 |----------------|-----------------|
-| uid            | bobsmith        |
-| givenName      | Bob             |
-| email          | bob@example.com |
+| uid            | [ bobsmith ]    |
+| givenName      | [ Bob ]         |
+| email          | [ bob@example.com ] |
 
 You'll likely need to collect attributes from more than just the table with the username and password hash. There are two supported ways to do this: table joins on your authentication query, or providing an array of queries for the `query` parameter instead of just the single query.
 
 A basic example of the single query with join:
 
-```
+```php
     'example-sql' => [
         'sqlauth:SQL',
         'dsn' => 'pgsql:host=postgresql;port=5432;dbname=simplesaml',
@@ -81,7 +78,7 @@ A basic example of the single query with join:
 
 which can also be written as:
 
-```
+```php
     'example-sql' => [
         'sqlauth:SQL',
         'dsn' => 'pgsql:host=postgresql;port=5432;dbname=simplesaml',
@@ -107,6 +104,7 @@ both of which will return attributes like:
 For simple cases, the single query will suffice. As the number of tables you are joining to collate your attributes gets higher, then using the query list will make your configuration more maintainable.
 
 In summary:
+
 - If the single string query (or the first query if it's an array of queries) returns no rows, that indicates authentication failed.
 - The single string query (or the first query if it's an array of queries) should use the passed `:username` and `:password` query parameters to do authentication.
 - If more than one query is desirable or required to get all of the attributes, you can specify an array of queries. In this case, the result set of the second and subsequent queries in that array provide attributes only - only the first query is used to determine if the username/password is correct or not, and as such :password is only passed to the first query in the list.
@@ -115,10 +113,10 @@ In summary:
 - If multiple queries return the same column names, they will also be merged into the same attributes.
 - Duplicate values and NULL values will be removed.
 
-
 Further Examples
 ----------------
 
+```sql
 Example query - SHA256 of salt + password, with the salt stored in an independent column, MySQL server:
 
     SELECT uid, givenName, email, eduPersonPrincipalName
@@ -131,9 +129,11 @@ Example query - SHA256 of salt + password, with the salt stored in an independen
         ),
         256
     )
+```
 
 Example query - SHA256 of salt + password, with the salt stored in an independent column. Multiple groups, MySQL server:
 
+```sql
     SELECT users.uid, givenName, email, eduPersonPrincipalName, groupname AS groups
     FROM users LEFT JOIN usergroups ON users.uid = usergroups.username
     WHERE users.uid = :username
@@ -144,9 +144,11 @@ Example query - SHA256 of salt + password, with the salt stored in an independen
         ),
         256
     )
+```
 
 Example query - SHA512 of salt + password, stored as salt (32 bytes) + sha256(salt + password) in password-field, PostgreSQL server:
 
+```sql
     SELECT uid, givenName, email, eduPersonPrincipalName
     FROM users
     WHERE username = :username
@@ -159,6 +161,7 @@ Example query - SHA512 of salt + password, stored as salt (32 bytes) + sha256(sa
         ),
         512
     )
+```
 
 Security considerations
 -----------------------
