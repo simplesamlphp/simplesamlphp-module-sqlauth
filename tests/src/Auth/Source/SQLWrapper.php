@@ -13,12 +13,15 @@ use SimpleSAML\Module\sqlauth\Auth\Source\SQL;
  * method in SQL.php
  */
 
-class SQLWrapper extends SQL {
-    public function __construct(array $info, array $config) {
+class SQLWrapper extends SQL
+{
+    public function __construct(array $info, array $config)
+    {
         parent::__construct($info, $config);
     }
 
-    public function callLogin(string $username, string $password): array {
+    public function callLogin(string $username, string $password): array
+    {
         return $this->login($username, $password);
     }
 }

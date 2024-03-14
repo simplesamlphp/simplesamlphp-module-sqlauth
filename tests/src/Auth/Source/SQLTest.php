@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace SimpleSAML\Test\Module\sqlauth\Auth\Source;
 
-use Exception;
 use PDO;
 use PHPUnit\Framework\TestCase;
-use SimpleSAML\Configuration;
 use SimpleSAML\Test\Module\sqlauth\Auth\Source\SQLWrapper;
 
 /**
@@ -27,7 +25,7 @@ class SQLTest extends TestCase
 
     public static function setUpBeforeClass(): void
     {
-        $pdo = new PDO('sqlite:file::memory:?cache=shared', null, null, array(PDO::ATTR_PERSISTENT => true));
+        $pdo = new PDO('sqlite:file::memory:?cache=shared', null, null, [PDO::ATTR_PERSISTENT => true]);
 
         // Create tables
         $pdo->exec("
@@ -86,7 +84,8 @@ class SQLTest extends TestCase
         ]);
     }
 
-    public function testBasicSingleFailedLogin() {
+    public function testBasicSingleFailedLogin()
+    {
         $this->expectException(\SimpleSAML\Error\Error::class);
         // Wrong username/password
         $this->config['query'] = "select givenName, email from users where uid=:username and password=:password";
@@ -112,7 +111,8 @@ class SQLTest extends TestCase
         ]);
     }
 
-    public function testJoinSingleFailedLogin() {
+    public function testJoinSingleFailedLogin()
+    {
         $this->expectException(\SimpleSAML\Error\Error::class);
         // Wrong username/password
         $this->config['query'] = "
@@ -129,7 +129,7 @@ class SQLTest extends TestCase
         $this->config['query'] = [
             "select givenName, email from users where uid=:username and password=:password",
             "select groupname from usergroups where uid=:username",
-        ]; 
+        ];
         $ret = (new SQLWrapper($this->info, $this->config))->callLogin('bob', 'password');
         asort($ret);
         asort($ret['groupname']);
@@ -141,13 +141,14 @@ class SQLTest extends TestCase
         ]);
     }
 
-    public function testMultiQueryFailedLogin() {
+    public function testMultiQueryFailedLogin()
+    {
         $this->expectException(\SimpleSAML\Error\Error::class);
         // Wrong username/password
         $this->config['query'] = [
             "select givenName, email from users where uid=:username and password=:password",
             "select groupname from usergroups where uid=:username",
-        ]; 
+        ];
         $ret = (new SQLWrapper($this->info, $this->config))->callLogin('alice', 'wrong');
         $this->assertCount(0, $ret);
     }
@@ -159,7 +160,7 @@ class SQLTest extends TestCase
             "select givenName, email from users where uid=:username and password=:password",
             "select groupname from usergroups where uid=:username and groupname like '%nomatch%'",
             "select groupname from usergroups where uid=:username and groupname like 'stud%'",
-        ]; 
+        ];
         $ret = (new SQLWrapper($this->info, $this->config))->callLogin('bob', 'password');
         asort($ret);
         asort($ret['groupname']);
@@ -178,7 +179,7 @@ class SQLTest extends TestCase
             "select givenName, email from users where uid=:username and password=:password",
             "select groupname from usergroups where uid=:username and groupname like 'stud%'",
             "select groupname from usergroups where uid=:username and groupname like '%sers'",
-        ]; 
+        ];
         $ret = (new SQLWrapper($this->info, $this->config))->callLogin('bob', 'password');
         asort($ret);
         asort($ret['groupname']);

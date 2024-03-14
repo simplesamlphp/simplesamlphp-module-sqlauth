@@ -92,17 +92,17 @@ class SQL extends UserPassBase
 
         // Query can be a single query or an array of queries.
         if (!array_key_exists('query', $config)) {
-            throw new Exception('Missing required attribute \'query\' '.
+            throw new Exception('Missing required attribute \'query\' ' .
                 'for authentication source ' . $this->authId);
         } elseif (is_array($config['query']) && (count($config['query']) < 1)) {
-            throw new Exception('Required attribute \'query\' is an empty '.
+            throw new Exception('Required attribute \'query\' is an empty ' .
                 'list of queries for authentication source ' . $this->authId);
         }
 
         $this->dsn = $config['dsn'];
         $this->username = $config['username'];
         $this->password = $config['password'];
-        $this->query = is_string($config['query']) ? [$config['query']]: $config['query'];
+        $this->query = is_string($config['query']) ? [$config['query']] : $config['query'];
         if (isset($config['options'])) {
             $this->options = $config['options'];
         }
@@ -167,7 +167,7 @@ class SQL extends UserPassBase
         $attributes = [];
 
         $numQueries = count($this->query);
-        for ($x=0 ; $x < $numQueries ; $x++) {
+        for ($x = 0; $x < $numQueries; $x++) {
             try {
                 $sth = $db->prepare($this->query[$x]);
             } catch (PDOException $e) {
