@@ -62,7 +62,7 @@ class SQL extends UserPassBase
      * The username and password will be available as :username and :password.
      * @var string
      */
-    private string $query;
+    protected string $query;
 
     /**
      * Constructor for this authentication source.
@@ -105,7 +105,7 @@ class SQL extends UserPassBase
      *
      * @return \PDO  The database connection.
      */
-    private function connect(): PDO
+    protected function connect(): PDO
     {
         try {
             $db = new PDO($this->dsn, $this->username, $this->password, $this->options);
