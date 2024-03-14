@@ -57,12 +57,12 @@ class SQL extends UserPassBase
     private array $options = [];
 
     /**
-     * The query we should use to retrieve the attributes for the user.
+     * The query or queries we should use to retrieve the attributes for the user.
      *
      * The username and password will be available as :username and :password.
-     * @var string
+     * @var array
      */
-    private string $query;
+    private array $query;
 
     /**
      * Constructor for this authentication source.
@@ -76,7 +76,7 @@ class SQL extends UserPassBase
         parent::__construct($info, $config);
 
         // Make sure that all required parameters are present.
-        foreach (['dsn', 'username', 'password', 'query'] as $param) {
+        foreach (['dsn', 'username', 'password'] as $param) {
             if (!array_key_exists($param, $config)) {
                 throw new Exception('Missing required attribute \'' . $param .
                     '\' for authentication source ' . $this->authId);
@@ -90,10 +90,19 @@ class SQL extends UserPassBase
             }
         }
 
+        // Query can be a single query or an array of queries.
+        if (!array_key_exists('query', $config)) {
+            throw new Exception('Missing required attribute \'query\' ' .
+                'for authentication source ' . $this->authId);
+        } elseif (is_array($config['query']) && (count($config['query']) < 1)) {
+            throw new Exception('Required attribute \'query\' is an empty ' .
+                'list of queries for authentication source ' . $this->authId);
+        }
+
         $this->dsn = $config['dsn'];
         $this->username = $config['username'];
         $this->password = $config['password'];
-        $this->query = $config['query'];
+        $this->query = is_string($config['query']) ? [$config['query']] : $config['query'];
         if (isset($config['options'])) {
             $this->options = $config['options'];
         }
@@ -154,61 +163,71 @@ class SQL extends UserPassBase
     protected function login(string $username, string $password): array
     {
         $db = $this->connect();
-
-        try {
-            $sth = $db->prepare($this->query);
-        } catch (PDOException $e) {
-            throw new Exception('sqlauth:' . $this->authId .
-                ': - Failed to prepare query: ' . $e->getMessage());
-        }
-
-        try {
-            $sth->execute(['username' => $username, 'password' => $password]);
-        } catch (PDOException $e) {
-            throw new Exception('sqlauth:' . $this->authId .
-                ': - Failed to execute query: ' . $e->getMessage());
-        }
-
-        try {
-            $data = $sth->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            throw new Exception('sqlauth:' . $this->authId .
-                ': - Failed to fetch result set: ' . $e->getMessage());
-        }
-
-        Logger::info('sqlauth:' . $this->authId . ': Got ' . count($data) .
-            ' rows from database');
-
-        if (count($data) === 0) {
-            // No rows returned - invalid username/password
-            Logger::error('sqlauth:' . $this->authId .
-                ': No rows in result set. Probably wrong username/password.');
-            throw new Error\Error('WRONGUSERPASS');
-        }
-
-        /* Extract attributes. We allow the resultset to consist of multiple rows. Attributes
-         * which are present in more than one row will become multivalued. null values and
-         * duplicate values will be skipped. All values will be converted to strings.
-         */
+        $params = ['username' => $username, 'password' => $password];
         $attributes = [];
-        foreach ($data as $row) {
-            foreach ($row as $name => $value) {
-                if ($value === null) {
-                    continue;
+
+        $numQueries = count($this->query);
+        for ($x = 0; $x < $numQueries; $x++) {
+            try {
+                $sth = $db->prepare($this->query[$x]);
+            } catch (PDOException $e) {
+                throw new Exception('sqlauth:' . $this->authId .
+                    ': - Failed to prepare query: ' . $e->getMessage());
+            }
+
+            try {
+                $sth->execute($params);
+            } catch (PDOException $e) {
+                throw new Exception('sqlauth:' . $this->authId .
+                    ': - Failed to execute query: ' . $e->getMessage());
+            }
+
+            try {
+                $data = $sth->fetchAll(PDO::FETCH_ASSOC);
+            } catch (PDOException $e) {
+                throw new Exception('sqlauth:' . $this->authId .
+                    ': - Failed to fetch result set: ' . $e->getMessage());
+            }
+
+            Logger::info('sqlauth:' . $this->authId . ': Got ' . count($data) .
+                ' rows from database');
+
+            if ($x === 0) {
+                if (count($data) === 0) {
+                    // No rows returned from first query - invalid username/password
+                    Logger::error('sqlauth:' . $this->authId .
+                        ': No rows in result set. Probably wrong username/password.');
+                    throw new Error\Error('WRONGUSERPASS');
                 }
+                /* Only the first query should be passed the password, as that is the only
+                 * one used for authentication. Subsequent queries are only used for
+                 * getting attribute lists, so only need the username. */
+                unset($params['password']);
+            }
 
-                $value = (string) $value;
+            /* Extract attributes. We allow the resultset to consist of multiple rows. Attributes
+            * which are present in more than one row will become multivalued. null values and
+            * duplicate values will be skipped. All values will be converted to strings.
+            */
+            foreach ($data as $row) {
+                foreach ($row as $name => $value) {
+                    if ($value === null) {
+                        continue;
+                    }
 
-                if (!array_key_exists($name, $attributes)) {
-                    $attributes[$name] = [];
+                    $value = (string) $value;
+
+                    if (!array_key_exists($name, $attributes)) {
+                        $attributes[$name] = [];
+                    }
+
+                    if (in_array($value, $attributes[$name], true)) {
+                        // Value already exists in attribute
+                        continue;
+                    }
+
+                    $attributes[$name][] = $value;
                 }
-
-                if (in_array($value, $attributes[$name], true)) {
-                    // Value already exists in attribute
-                    continue;
-                }
-
-                $attributes[$name][] = $value;
             }
         }
 
