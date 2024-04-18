@@ -173,7 +173,6 @@ class SQL extends UserPassBase
     {
         if ($this->username_regex !== null) {
             if (!preg_match($this->username_regex, $username)) {
-                // No rows returned from first query - invalid username/password
                 Logger::error('sqlauth:' . $this->authId .
                     ": Username doesn't match username_regex.");
                 throw new Error\Error('WRONGUSERPASS');
