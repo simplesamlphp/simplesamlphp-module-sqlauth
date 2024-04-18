@@ -84,6 +84,31 @@ class SQLTest extends TestCase
         ]);
     }
 
+    public function testBasicSingleUsernameRegexSuccess(): void
+    {
+        // Correct username/password
+        $this->config['query'] = "select givenName, email from users where uid=:username and password=:password";
+        $this->config['username_regex'] = '/^[a-z]+$/'; // Username will only be acceptable if it is a single lower case word
+        $ret = (new SQLWrapper($this->info, $this->config))->callLogin('bob', 'password');
+        asort($ret);
+        $this->assertCount(2, $ret);
+        $this->assertEquals($ret, [
+            'email' => ['bob@example.com'],
+            'givenName' => ["Bob"],
+        ]);
+    }
+
+    public function testBasicSingleUsernameRegexFailedLogin(): void
+    {
+        $this->expectException(\SimpleSAML\Error\Error::class);
+        // Correct username/password, but doesn't match the username regex
+        $this->config['query'] = "select givenName, email from users where uid=:username and password=:password";
+        $this->config['username_regex'] = '/^\d+$/'; // Username will only be acceptable if it is a non-negative integer
+        $ret = (new SQLWrapper($this->info, $this->config))->callLogin('bob', 'password');
+        asort($ret);
+        $this->assertCount(0, $ret);
+    }
+
     public function testBasicSingleFailedLogin()
     {
         $this->expectException(\SimpleSAML\Error\Error::class);

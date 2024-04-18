@@ -51,6 +51,12 @@ class SQL extends UserPassBase
     private string $password;
 
     /**
+     * An optional regex that the username should match.
+     * @var string
+     */
+    private ?string $username_regex;
+
+    /**
      * The options that we should connect to the database with.
      * @var array
      */
@@ -106,6 +112,9 @@ class SQL extends UserPassBase
         if (isset($config['options'])) {
             $this->options = $config['options'];
         }
+
+        // Optional "username_regex" parameter
+        $this->username_regex = array_key_exists('username_regex', $config) ? $config['username_regex'] : null;
     }
 
 
@@ -162,6 +171,15 @@ class SQL extends UserPassBase
      */
     protected function login(string $username, string $password): array
     {
+        if ($this->username_regex !== null) {
+            if (!preg_match($this->username_regex, $username)) {
+                // No rows returned from first query - invalid username/password
+                Logger::error('sqlauth:' . $this->authId .
+                    ": Username doesn't match username_regex.");
+                throw new Error\Error('WRONGUSERPASS');
+            }
+        }
+
         $db = $this->connect();
         $params = ['username' => $username, 'password' => $password];
         $attributes = [];

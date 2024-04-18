@@ -19,6 +19,9 @@ Options
 `query`
 :   The SQL query or queries which should be used to authenticate the user and retrieve their attributes.
 
+`username_regex`
+:   (Optional) A regular expression that the username must match. Useful if the type of the username column in the database isn't a string (eg. an integer), or if the format is well known (eg. email address, single word with no spaces, etc) to avoid going to the database for a query that will never result in successful authentication.
+
 Writing a Query / Queries
 -------------------------
 
@@ -51,6 +54,7 @@ a basic entry with a single SQL string in `authsources.php` might look like this
         'username' => 'simplesaml',
         'password' => 'secretpassword',
         'query' => "select uid, givenName as \"givenName\", email from users where uid=:username and password=encode(sha512(concat((select salt from users where uid=1),  :password)::bytea), 'base64')",
+        'username_regex' => '/^[a-z]+$/', // Username will only be acceptable if it is a single lower case word
     ],
 ```
 
