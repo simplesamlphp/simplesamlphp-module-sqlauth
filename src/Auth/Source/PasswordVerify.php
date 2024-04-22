@@ -10,6 +10,20 @@ use PDOException;
 use SimpleSAML\Assert\Assert;
 use SimpleSAML\Error;
 use SimpleSAML\Logger;
+<<<<<<< HEAD
+=======
+use SimpleSAML\Module\sqlauth\Auth\Source\SQL;
+
+use function array_key_exists;
+use function array_keys;
+use function count;
+use function implode;
+use function in_array;
+use function is_null;
+use function password_verify;
+use function sprintf;
+use function strval;
+>>>>>>> 074b35da3ec9ca71533459aab2e426db0be6812b
 
 /**
  * Simple SQL authentication source
@@ -19,9 +33,15 @@ use SimpleSAML\Logger;
  * password_verify() function to allow for example PASSWORD_ARGON2ID to be used
  * for verification.
  *
+<<<<<<< HEAD
  * While this class has a query parameter as the SQL class does the meaning 
  * is different. The query for this class should return at least a column 
  * called passwordhash containing the hashed password which was generated 
+=======
+ * While this class has a query parameter as the SQL class does the meaning
+ * is different. The query for this class should return at least a column
+ * called passwordhash containing the hashed password which was generated
+>>>>>>> 074b35da3ec9ca71533459aab2e426db0be6812b
  * for example using
  *    password_hash('hello', PASSWORD_ARGON2ID );
  *
@@ -29,7 +49,7 @@ use SimpleSAML\Logger;
  *   password_verify($password, row['passwordhash'] );
  *
  * Unlike the SQL class the username is the only parameter passed to the SQL query,
- * the query can not perform password checks, they are performed by the PHP code 
+ * the query can not perform password checks, they are performed by the PHP code
  * in this class using password_verify().
  *
  * If there are other columns in the returned data they are assumed to be attributes
@@ -38,12 +58,12 @@ use SimpleSAML\Logger;
  * @package SimpleSAMLphp
  */
 
-class PasswordVerify extends \SimpleSAML\Module\sqlauth\Auth\Source\SQL
+class PasswordVerify extends SQL
 {
     /**
      * The column in the result set containing the passwordhash.
      */
-    private $passwordhashcolumn;
+    protected string $passwordhashcolumn = 'passwordhash';
 
     /**
      * Constructor for this authentication source.
@@ -51,19 +71,13 @@ class PasswordVerify extends \SimpleSAML\Module\sqlauth\Auth\Source\SQL
      * @param array $info  Information about this authentication source.
      * @param array $config  Configuration.
      */
-    public function __construct(array $info, array $config)    
+    public function __construct(array $info, array $config)
     {
-        assert(is_array($info));
-        assert(is_array($config));
-
         // Call the parent constructor first, as required by the interface
         parent::__construct($info, $config);
 
-        if( array_key_exists('passwordhashcolumn', $config )) {
+        if (array_key_exists('passwordhashcolumn', $config)) {
             $this->passwordhashcolumn = $config['passwordhashcolumn'];
-        }
-        if( !$this->passwordhashcolumn ) {
-            $this->passwordhashcolumn = 'passwordhash';
         }
     }
 
