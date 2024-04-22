@@ -68,44 +68,6 @@ class PasswordVerify extends \SimpleSAML\Module\sqlauth\Auth\Source\SQL
     }
 
 
-    /**
-     * Extract SQL columns into SAML attribute array
-     *
-     * @param array  $data  Associative array from database in the format of PDO fetchAll
-     * @param array  $forbiddenAttributes An array of attributes to never return
-     * @return array  Associative array with the users attributes.
-     */
-    protected function extractAttributes( $data, $forbiddenAttributes = array() )
-    {
-        $attributes = [];
-        foreach ($data as $row) {
-            foreach ($row as $name => $value) {
-                if ($value === null) {
-                    continue;
-                }
-                if (in_array($name, $forbiddenAttributes)) {
-                    continue;
-                }
-               
-
-                $value = (string) $value;
-
-                if (!array_key_exists($name, $attributes)) {
-                    $attributes[$name] = [];
-                }
-
-                if (in_array($value, $attributes[$name], true)) {
-                    // Value already exists in attribute
-                    continue;
-                }
-
-                $attributes[$name][] = $value;
-            }
-        }
-        
-        return $attributes;
-    }
-
 
     /**
      * Attempt to log in using the given username and password.
@@ -122,92 +84,83 @@ class PasswordVerify extends \SimpleSAML\Module\sqlauth\Auth\Source\SQL
      */
     protected function login(string $username, string $password): array
     {
-        assert(is_string($username));
-        assert(is_string($password));
-
-
-        $db = $this->connect();
+        $this->verifyUserNameWithRegex( $username );
         
-        try {
-            $sth = $db->prepare($this->query);
-        } catch (\PDOException $e) {
-            throw new \Exception('sqlauth:'.$this->authId.
-                ': - Failed to prepare query: '.$e->getMessage());
-        }
+        $db = $this->connect();
+        $params = ['username' => $username, 'password' => $password];
+        $attributes = [];
 
+        $numQueries = count($this->query);
+        for ($x = 0; $x < $numQueries; $x++) {
 
-        try {
-            $sth->execute(['username' => $username]);
-        } catch (\PDOException $e) {
-            throw new \Exception('sqlauth:'.$this->authId.
-                ': - Failed to execute sql: '.$this->query.' query: '.$e->getMessage());
-        }
+            $data = $this->executeQuery( $this->query[$x], $params )
+            
+            \SimpleSAML\Logger::info('sqlauth:'.$this->authId.': Got '.count($data).
+                                     ' rows from database');
 
-        try {
-            $data = $sth->fetchAll(\PDO::FETCH_ASSOC);
-        } catch (\PDOException $e) {
-            throw new \Exception('sqlauth:'.$this->authId.
-                ': - Failed to fetch result set: '.$e->getMessage());
-        }
-
-        \SimpleSAML\Logger::info('sqlauth:'.$this->authId.': Got '.count($data).
-            ' rows from database');
-
-        if (count($data) === 0) {
-            // No rows returned - invalid username/password
-            \SimpleSAML\Logger::error('sqlauth:'.$this->authId.
-                ': No rows in result set. Probably wrong username/password.');
-            throw new \SimpleSAML\Error\Error('WRONGUSERPASS');
-        }
-
-        /**
-         * Sanity check, passwordhash must be in each resulting tuple and must have
-         * the same value in every tuple.
-         * 
-         * Note that $pwhash will contain the passwordhash value after this loop.
-         */
-        $pwhash = null;
-        foreach ($data as $row) {
-            if (!array_key_exists($this->passwordhashcolumn, $row)
-                || is_null($row[$this->passwordhashcolumn]))
-            {
-                \SimpleSAML\Logger::error('sqlauth:'.$this->authId.
-                                          ': column ' . $this->passwordhashcolumn . ' must be in every result tuple.');
-                throw new \SimpleSAML\Error\Error('WRONGUSERPASS');
+            if ($x === 0) {
+                if (count($data) === 0) {
+                    // No rows returned - invalid username/password
+                    \SimpleSAML\Logger::error('sqlauth:'.$this->authId.
+                                              ': No rows in result set. Probably wrong username/password.');
+                    throw new \SimpleSAML\Error\Error('WRONGUSERPASS');
+                }
+                /* Only the first query should be passed the password, as that is the only
+                 * one used for authentication. Subsequent queries are only used for
+                 * getting attribute lists, so only need the username. */
+                unset($params['password']);
             }
-            if( $pwhash ) {
+                
+
+            /**
+             * Sanity check, passwordhash must be in each resulting tuple and must have
+             * the same value in every tuple.
+             * 
+             * Note that $pwhash will contain the passwordhash value after this loop.
+             */
+            $pwhash = null;
+            foreach ($data as $row) {
+                if (!array_key_exists($this->passwordhashcolumn, $row)
+                    || is_null($row[$this->passwordhashcolumn]))
+                {
+                    \SimpleSAML\Logger::error('sqlauth:'.$this->authId.
+                                              ': column ' . $this->passwordhashcolumn . ' must be in every result tuple.');
+                    throw new \SimpleSAML\Error\Error('WRONGUSERPASS');
+                }
+                if( $pwhash ) {
+                    if( $pwhash != $row[$this->passwordhashcolumn] ) {
+                        \SimpleSAML\Logger::error('sqlauth:'.$this->authId.
+                                                  ': column ' . $this->passwordhashcolumn . ' must be THE SAME in every result tuple.');
+                        throw new \SimpleSAML\Error\Error('WRONGUSERPASS');
+                    }
+                }
+                $pwhash = $row[$this->passwordhashcolumn];
+            }
+            /**
+             * This should never happen as the count(data) test above would have already thrown.
+             * But checking twice doesn't hurt.
+             */
+            if( is_null($pwhash)) {
                 if( $pwhash != $row[$this->passwordhashcolumn] ) {
                     \SimpleSAML\Logger::error('sqlauth:'.$this->authId.
-                                              ': column ' . $this->passwordhashcolumn . ' must be THE SAME in every result tuple.');
+                                              ': column ' . $this->passwordhashcolumn . ' does not contain a password hash.');
                     throw new \SimpleSAML\Error\Error('WRONGUSERPASS');
                 }
             }
-            $pwhash = $row[$this->passwordhashcolumn];
-        }
-        /**
-         * This should never happen as the count(data) test above would have already thrown.
-         * But checking twice doesn't hurt.
-         */
-        if( is_null($pwhash)) {
-            if( $pwhash != $row[$this->passwordhashcolumn] ) {
-                \SimpleSAML\Logger::error('sqlauth:'.$this->authId.
-                                          ': column ' . $this->passwordhashcolumn . ' does not contain a password hash.');
+
+            /**
+             * VERIFICATION!
+             * Now to check if the password the user supplied is actually valid
+             */
+            if( !password_verify( $password, $pwhash )) {
+                \SimpleSAML\Logger::error('sqlauth:'.$this->authId. ': password is incorrect.');
                 throw new \SimpleSAML\Error\Error('WRONGUSERPASS');
             }
-        }
 
-        /**
-         * VERIFICATION!
-         * Now to check if the password the user supplied is actually valid
-         */
-        if( !password_verify( $password, $pwhash )) {
-            \SimpleSAML\Logger::error('sqlauth:'.$this->authId. ': password is incorrect.');
-            throw new \SimpleSAML\Error\Error('WRONGUSERPASS');
-        }
 
+            $this->extractAttributes( $attributes, $data, array($this->passwordhashcolumn) );
+        }
         
-        $attributes = $this->extractAttributes( $data, array($this->passwordhashcolumn) );
-
         \SimpleSAML\Logger::info('sqlauth:'.$this->authId.': Attributes: '.
             implode(',', array_keys($attributes)));
 

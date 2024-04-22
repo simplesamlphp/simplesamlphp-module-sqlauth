@@ -1,7 +1,19 @@
 `sqlauth:SQL`
 =============
 
-This is a authentication module for authenticating a user against a SQL database.
+These are authentication modules for authenticating a user against a
+SQL database. 
+
+The SQL module performs password verification in the database itself
+using database functions such as sha512 and storing a salt in the
+database. The PasswordVerify module verifies passwords in php using
+the password_verify() function. The PasswordVerify module was created
+to ask the least of the database either because there is minimal
+support in the database or to allow the same code to work against many
+databases without modification. More information on PasswordVerify is
+provided at the end of this document.
+
+
 
 Options
 -------
@@ -21,6 +33,9 @@ Options
 
 `username_regex`
 :   (Optional) A regular expression that the username must match. Useful if the type of the username column in the database isn't a string (eg. an integer), or if the format is well known (eg. email address, single word with no spaces, etc) to avoid going to the database for a query that will never result in successful authentication.
+
+`passwordhashcolumn`
+:    (Optional) Only When using the sqlauth:PasswordVerify module. This is the name of the column that contains the hashed password. The default is to look for a column 'passwordhash' in the database.
 
 Writing a Query / Queries
 -------------------------
@@ -178,3 +193,54 @@ be used (by just concatenating them to the input of the hash function), but shou
 used instead as an additional security measure.
 
 One way hashing algorithms like MD5 or SHA1 are considered insecure and should therefore be avoided.
+
+
+The PasswordVerify module
+-------------------------
+
+Users and passwords have to be set in the database by other means than the PasswordVerify module. 
+
+For example:
+
+```sql
+    CREATE TABLE users (
+      uid VARCHAR(30) NOT NULL PRIMARY KEY,
+      passwordhash TEXT NOT NULL,
+      givenName TEXT NOT NULL,
+      email TEXT NOT NULL,
+      eduPersonPrincipalName TEXT NOT NULL
+    );
+```
+
+A user can be added with a known password "FIXMEPASSWORD" as shown below. 
+
+```php
+$dsn = "pgsql:host=...";
+$username = "fixme";
+$password = "";
+$options = array();
+
+$query = "insert into users values ('test@example.com',:passwordhash, 'test', 'test@example.com', 'test@example.com' )";
+    
+$db = new PDO($dsn, $username, $password, $options);
+$db->exec("SET NAMES 'UTF8'");
+
+$params = ["passwordhash" => password_hash("FIXMEPASSWORD", PASSWORD_ARGON2ID ) ];
+$sth = $db->prepare($query);
+$sth->execute($params);
+```
+
+Since the above is using the default passwordhash column name this can
+then be used with the following addition to authsources.php.
+
+```php
+'filesender-dbauth' => [
+    'sqlauth:PasswordVerify',
+    'dsn' => 'pgsql:host=...',
+    'username' => 'dbuser',
+    'password' => 'dbpassword',
+    'passwodhashcolumn' =>  'passwordhash',
+    'query' => 'select uid, email, passwordhash, eduPersonPrincipalName from users where uid = :username ',
+],
+
+```

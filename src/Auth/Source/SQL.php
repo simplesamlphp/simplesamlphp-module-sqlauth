@@ -54,7 +54,7 @@ class SQL extends UserPassBase
      * An optional regex that the username should match.
      * @var string
      */
-    private ?string $username_regex;
+    protected ?string $username_regex;
 
     /**
      * The options that we should connect to the database with.
@@ -155,7 +155,91 @@ class SQL extends UserPassBase
         return $db;
     }
 
+    /**
+     * Extract SQL columns into SAML attribute array
+     *
+     * @param $attributes output place to store extracted attributes
+     * @param array  $data  Associative array from database in the format of PDO fetchAll
+     * @param array  $forbiddenAttributes An array of attributes to never return
+     * @return $attributes
+     */
+    protected function extractAttributes( &$attributes, $data, $forbiddenAttributes = array() )
+    {
+        foreach ($data as $row) {
+            foreach ($row as $name => $value) {
+                if ($value === null) {
+                    continue;
+                }
+                if (in_array($name, $forbiddenAttributes)) {
+                    continue;
+                }
 
+                $value = (string) $value;
+
+                if (!array_key_exists($name, $attributes)) {
+                    $attributes[$name] = [];
+                }
+
+                if (in_array($value, $attributes[$name], true)) {
+                    // Value already exists in attribute
+                    continue;
+                }
+
+                $attributes[$name][] = $value;
+            }
+        }
+        return $attributes;
+    }    
+
+    /**
+     * Execute the query with given parameters and return the tuples that result.
+     *
+     * @param string $query  SQL to execute
+     * @param array  $params parameters to the SQL query
+     * @return tuples that result
+     */
+    protected executeQuery( string $query, array $params ): array
+    {
+        try {
+            $sth = $db->prepare($this->query[$x]);
+        } catch (PDOException $e) {
+            throw new Exception('sqlauth:' . $this->authId .
+                                ': - Failed to prepare query: ' . $e->getMessage());
+        }
+
+        try {
+            $sth->execute($params);
+        } catch (PDOException $e) {
+            throw new Exception('sqlauth:' . $this->authId .
+                                ': - Failed to execute query: ' . $e->getMessage());
+        }
+
+        try {
+            $data = $sth->fetchAll(PDO::FETCH_ASSOC);
+            return $data;
+        } catch (PDOException $e) {
+            throw new Exception('sqlauth:' . $this->authId .
+                                ': - Failed to fetch result set: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * If there is a username_regex then verify the passed username against it and
+     * throw an exception if it fails.
+     *
+     * @param string $username  The username the user wrote.
+     */
+    protected function verifyUserNameWithRegex( string $username ): void
+    {
+        if ($this->username_regex !== null) {
+            if (!preg_match($this->username_regex, $username)) {
+                Logger::error('sqlauth:' . $this->authId .
+                    ": Username doesn't match username_regex.");
+                throw new Error\Error('WRONGUSERPASS');
+            }
+        }
+    }
+    
     /**
      * Attempt to log in using the given username and password.
      *
@@ -171,13 +255,7 @@ class SQL extends UserPassBase
      */
     protected function login(string $username, string $password): array
     {
-        if ($this->username_regex !== null) {
-            if (!preg_match($this->username_regex, $username)) {
-                Logger::error('sqlauth:' . $this->authId .
-                    ": Username doesn't match username_regex.");
-                throw new Error\Error('WRONGUSERPASS');
-            }
-        }
+        $this->verifyUserNameWithRegex( $username );
 
         $db = $this->connect();
         $params = ['username' => $username, 'password' => $password];
@@ -185,27 +263,9 @@ class SQL extends UserPassBase
 
         $numQueries = count($this->query);
         for ($x = 0; $x < $numQueries; $x++) {
-            try {
-                $sth = $db->prepare($this->query[$x]);
-            } catch (PDOException $e) {
-                throw new Exception('sqlauth:' . $this->authId .
-                    ': - Failed to prepare query: ' . $e->getMessage());
-            }
-
-            try {
-                $sth->execute($params);
-            } catch (PDOException $e) {
-                throw new Exception('sqlauth:' . $this->authId .
-                    ': - Failed to execute query: ' . $e->getMessage());
-            }
-
-            try {
-                $data = $sth->fetchAll(PDO::FETCH_ASSOC);
-            } catch (PDOException $e) {
-                throw new Exception('sqlauth:' . $this->authId .
-                    ': - Failed to fetch result set: ' . $e->getMessage());
-            }
-
+            
+            $data = $this->executeQuery( $this->query[$x], $params )
+            
             Logger::info('sqlauth:' . $this->authId . ': Got ' . count($data) .
                 ' rows from database');
 
@@ -225,27 +285,9 @@ class SQL extends UserPassBase
             /* Extract attributes. We allow the resultset to consist of multiple rows. Attributes
             * which are present in more than one row will become multivalued. null values and
             * duplicate values will be skipped. All values will be converted to strings.
-            */
-            foreach ($data as $row) {
-                foreach ($row as $name => $value) {
-                    if ($value === null) {
-                        continue;
-                    }
-
-                    $value = (string) $value;
-
-                    if (!array_key_exists($name, $attributes)) {
-                        $attributes[$name] = [];
-                    }
-
-                    if (in_array($value, $attributes[$name], true)) {
-                        // Value already exists in attribute
-                        continue;
-                    }
-
-                    $attributes[$name][] = $value;
-                }
-            }
+             */
+            $this->extractAttributes( $attributes, $data, array() );
+            
         }
 
         Logger::info('sqlauth:' . $this->authId . ': Attributes: ' . implode(',', array_keys($attributes)));
