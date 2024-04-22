@@ -100,14 +100,14 @@ class PasswordVerify extends SQL
 
             $data = $this->executeQuery( $this->query[$x], $params )
             
-            \SimpleSAML\Logger::info('sqlauth:'.$this->authId.': Got '.count($data).
-                                     ' rows from database');
+            Logger::info('sqlauth:'.$this->authId.': Got '.count($data).
+                         ' rows from database');
 
             if ($x === 0) {
                 if (count($data) === 0) {
                     // No rows returned - invalid username/password
-                    \SimpleSAML\Logger::error('sqlauth:'.$this->authId.
-                                              ': No rows in result set. Probably wrong username/password.');
+                    Logger::error('sqlauth:'.$this->authId.
+                                  ': No rows in result set. Probably wrong username/password.');
                     throw new \SimpleSAML\Error\Error('WRONGUSERPASS');
                 }
                 /* Only the first query should be passed the password, as that is the only
@@ -128,14 +128,14 @@ class PasswordVerify extends SQL
                 if (!array_key_exists($this->passwordhashcolumn, $row)
                     || is_null($row[$this->passwordhashcolumn]))
                 {
-                    \SimpleSAML\Logger::error('sqlauth:'.$this->authId.
-                                              ': column ' . $this->passwordhashcolumn . ' must be in every result tuple.');
+                    Logger::error('sqlauth:'.$this->authId.
+                                  ': column ' . $this->passwordhashcolumn . ' must be in every result tuple.');
                     throw new \SimpleSAML\Error\Error('WRONGUSERPASS');
                 }
                 if( $pwhash ) {
                     if( $pwhash != $row[$this->passwordhashcolumn] ) {
-                        \SimpleSAML\Logger::error('sqlauth:'.$this->authId.
-                                                  ': column ' . $this->passwordhashcolumn . ' must be THE SAME in every result tuple.');
+                        Logger::error('sqlauth:'.$this->authId.
+                                      ': column ' . $this->passwordhashcolumn . ' must be THE SAME in every result tuple.');
                         throw new \SimpleSAML\Error\Error('WRONGUSERPASS');
                     }
                 }
@@ -147,8 +147,8 @@ class PasswordVerify extends SQL
              */
             if( is_null($pwhash)) {
                 if( $pwhash != $row[$this->passwordhashcolumn] ) {
-                    \SimpleSAML\Logger::error('sqlauth:'.$this->authId.
-                                              ': column ' . $this->passwordhashcolumn . ' does not contain a password hash.');
+                    Logger::error('sqlauth:'.$this->authId.
+                                  ': column ' . $this->passwordhashcolumn . ' does not contain a password hash.');
                     throw new \SimpleSAML\Error\Error('WRONGUSERPASS');
                 }
             }
@@ -158,7 +158,7 @@ class PasswordVerify extends SQL
              * Now to check if the password the user supplied is actually valid
              */
             if( !password_verify( $password, $pwhash )) {
-                \SimpleSAML\Logger::error('sqlauth:'.$this->authId. ': password is incorrect.');
+                Logger::error('sqlauth:'.$this->authId. ': password is incorrect.');
                 throw new \SimpleSAML\Error\Error('WRONGUSERPASS');
             }
 
@@ -166,8 +166,8 @@ class PasswordVerify extends SQL
             $this->extractAttributes( $attributes, $data, array($this->passwordhashcolumn) );
         }
         
-        \SimpleSAML\Logger::info('sqlauth:'.$this->authId.': Attributes: '.
-            implode(',', array_keys($attributes)));
+        Logger::info('sqlauth:'.$this->authId.': Attributes: '.
+                     implode(',', array_keys($attributes)));
 
         return $attributes;
     }
