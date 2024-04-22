@@ -234,7 +234,7 @@ Since the above is using the default passwordhash column name this can
 then be used with the following addition to authsources.php.
 
 ```php
-'filesender-dbauth' => [
+'smalldb-dbauth' => [
     'sqlauth:PasswordVerify',
     'dsn' => 'pgsql:host=...',
     'username' => 'dbuser',
