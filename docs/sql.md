@@ -2,7 +2,7 @@
 =============
 
 These are authentication modules for authenticating a user against a
-SQL database. 
+SQL database.
 
 The SQL module performs password verification in the database itself
 using database functions such as sha512 and storing a salt in the
@@ -12,8 +12,6 @@ to ask the least of the database either because there is minimal
 support in the database or to allow the same code to work against many
 databases without modification. More information on PasswordVerify is
 provided at the end of this document.
-
-
 
 Options
 -------
@@ -194,11 +192,10 @@ used instead as an additional security measure.
 
 One way hashing algorithms like MD5 or SHA1 are considered insecure and should therefore be avoided.
 
-
 The PasswordVerify module
 -------------------------
 
-Users and passwords have to be set in the database by other means than the PasswordVerify module. 
+Users and passwords have to be set in the database by other means than the PasswordVerify module.
 
 For example:
 
@@ -212,7 +209,7 @@ For example:
     );
 ```
 
-A user can be added with a known password "FIXMEPASSWORD" as shown below. 
+A user can be added with a known password "FIXMEPASSWORD" as shown below.
 
 ```php
 $dsn = "pgsql:host=...";
