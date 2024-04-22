@@ -264,7 +264,7 @@ class SQL extends UserPassBase
         $numQueries = count($this->query);
         for ($x = 0; $x < $numQueries; $x++) {
             
-            $data = $this->executeQuery( $this->query[$x], $params )
+            $data = $this->executeQuery($this->query[$x], $params);
             
             Logger::info('sqlauth:' . $this->authId . ': Got ' . count($data) .
                 ' rows from database');
