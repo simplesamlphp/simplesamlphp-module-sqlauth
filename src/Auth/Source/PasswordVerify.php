@@ -10,8 +10,6 @@ use PDOException;
 use SimpleSAML\Assert\Assert;
 use SimpleSAML\Error;
 use SimpleSAML\Logger;
-<<<<<<< HEAD
-=======
 use SimpleSAML\Module\sqlauth\Auth\Source\SQL;
 
 use function array_key_exists;
@@ -23,7 +21,6 @@ use function is_null;
 use function password_verify;
 use function sprintf;
 use function strval;
->>>>>>> 074b35da3ec9ca71533459aab2e426db0be6812b
 
 /**
  * Simple SQL authentication source
@@ -33,15 +30,9 @@ use function strval;
  * password_verify() function to allow for example PASSWORD_ARGON2ID to be used
  * for verification.
  *
-<<<<<<< HEAD
- * While this class has a query parameter as the SQL class does the meaning 
- * is different. The query for this class should return at least a column 
- * called passwordhash containing the hashed password which was generated 
-=======
  * While this class has a query parameter as the SQL class does the meaning
  * is different. The query for this class should return at least a column
  * called passwordhash containing the hashed password which was generated
->>>>>>> 074b35da3ec9ca71533459aab2e426db0be6812b
  * for example using
  *    password_hash('hello', PASSWORD_ARGON2ID );
  *
