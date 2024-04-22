@@ -198,7 +198,7 @@ class SQL extends UserPassBase
      * @param array  $params parameters to the SQL query
      * @return tuples that result
      */
-    protected executeQuery( string $query, array $params ): array
+    protected function executeQuery( string $query, array $params ): array
     {
         try {
             $sth = $db->prepare($this->query[$x]);
