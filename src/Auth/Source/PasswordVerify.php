@@ -92,13 +92,13 @@ class PasswordVerify extends SQL
         $this->verifyUserNameWithRegex( $username );
         
         $db = $this->connect();
-        $params = ['username' => $username, 'password' => $password];
+        $params = ['username' => $username];
         $attributes = [];
 
         $numQueries = count($this->query);
         for ($x = 0; $x < $numQueries; $x++) {
 
-            $data = $this->executeQuery($this->query[$x], $params);
+            $data = $this->executeQuery($db, $this->query[$x], $params);
             
             Logger::info('sqlauth:' . $this->authId . ': Got ' . count($data) .
                          ' rows from database');
@@ -110,10 +110,6 @@ class PasswordVerify extends SQL
                                   ': No rows in result set. Probably wrong username/password.');
                     throw new \SimpleSAML\Error\Error('WRONGUSERPASS');
                 }
-                /* Only the first query should be passed the password, as that is the only
-                 * one used for authentication. Subsequent queries are only used for
-                 * getting attribute lists, so only need the username. */
-                unset($params['password']);
             }
                 
 

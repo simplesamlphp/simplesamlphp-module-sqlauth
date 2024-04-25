@@ -198,10 +198,10 @@ class SQL extends UserPassBase
      * @param array  $params parameters to the SQL query
      * @return tuples that result
      */
-    protected function executeQuery( string $query, array $params ): array
+    protected function executeQuery( PDO $db, string $query, array $params ): array
     {
         try {
-            $sth = $db->prepare($this->query[$x]);
+            $sth = $db->prepare($query);
         } catch (PDOException $e) {
             throw new Exception('sqlauth:' . $this->authId .
                                 ': - Failed to prepare query: ' . $e->getMessage());
@@ -264,7 +264,7 @@ class SQL extends UserPassBase
         $numQueries = count($this->query);
         for ($x = 0; $x < $numQueries; $x++) {
             
-            $data = $this->executeQuery($this->query[$x], $params);
+            $data = $this->executeQuery($db, $this->query[$x], $params);
             
             Logger::info('sqlauth:' . $this->authId . ': Got ' . count($data) .
                 ' rows from database');
