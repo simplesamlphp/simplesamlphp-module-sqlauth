@@ -163,7 +163,7 @@ class SQL extends UserPassBase
      * @param array  $forbiddenAttributes An array of attributes to never return
      * @return $attributes
      */
-    protected function extractAttributes( &$attributes, $data, $forbiddenAttributes = array() )
+    protected function extractAttributes(&$attributes, $data, $forbiddenAttributes = [])
     {
         foreach ($data as $row) {
             foreach ($row as $name => $value) {
@@ -189,7 +189,7 @@ class SQL extends UserPassBase
             }
         }
         return $attributes;
-    }    
+    }
 
     /**
      * Execute the query with given parameters and return the tuples that result.
@@ -198,7 +198,7 @@ class SQL extends UserPassBase
      * @param array  $params parameters to the SQL query
      * @return tuples that result
      */
-    protected function executeQuery( PDO $db, string $query, array $params ): array
+    protected function executeQuery(PDO $db, string $query, array $params): array
     {
         try {
             $sth = $db->prepare($query);
@@ -229,7 +229,7 @@ class SQL extends UserPassBase
      *
      * @param string $username  The username the user wrote.
      */
-    protected function verifyUserNameWithRegex( string $username ): void
+    protected function verifyUserNameWithRegex(string $username): void
     {
         if ($this->username_regex !== null) {
             if (!preg_match($this->username_regex, $username)) {
@@ -239,7 +239,7 @@ class SQL extends UserPassBase
             }
         }
     }
-    
+
     /**
      * Attempt to log in using the given username and password.
      *
@@ -255,7 +255,7 @@ class SQL extends UserPassBase
      */
     protected function login(string $username, string $password): array
     {
-        $this->verifyUserNameWithRegex( $username );
+        $this->verifyUserNameWithRegex($username);
 
         $db = $this->connect();
         $params = ['username' => $username, 'password' => $password];
@@ -263,9 +263,8 @@ class SQL extends UserPassBase
 
         $numQueries = count($this->query);
         for ($x = 0; $x < $numQueries; $x++) {
-            
             $data = $this->executeQuery($db, $this->query[$x], $params);
-            
+
             Logger::info('sqlauth:' . $this->authId . ': Got ' . count($data) .
                 ' rows from database');
 
@@ -286,8 +285,7 @@ class SQL extends UserPassBase
             * which are present in more than one row will become multivalued. null values and
             * duplicate values will be skipped. All values will be converted to strings.
              */
-            $this->extractAttributes( $attributes, $data, array() );
-            
+            $this->extractAttributes($attributes, $data, []);
         }
 
         Logger::info('sqlauth:' . $this->authId . ': Attributes: ' . implode(',', array_keys($attributes)));
