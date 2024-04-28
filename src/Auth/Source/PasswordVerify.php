@@ -122,8 +122,9 @@ class PasswordVerify extends SQL
                 }
                 if ($pwhash) {
                     if ($pwhash != $row[$this->passwordhashcolumn]) {
-                        Logger::error('sqlauth:' . $this->authId .
-                                      ': column ' . $this->passwordhashcolumn . ' must be THE SAME in every result tuple.');
+                        Logger::error('sqlauth:' . $this->authId
+                                    . ': column ' . $this->passwordhashcolumn
+                                    . ' must be THE SAME in every result tuple.');
                         throw new \SimpleSAML\Error\Error('WRONGUSERPASS');
                     }
                 }
