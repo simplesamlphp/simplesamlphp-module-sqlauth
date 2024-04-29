@@ -106,8 +106,10 @@ class PasswordVerify extends SQL
             if ($x === 0) {
                 if (count($data) === 0) {
                     // No rows returned - invalid username/password
-                    Logger::error('sqlauth:' . $this->authId .
-                                  ': No rows in result set. Probably wrong username/password.');
+                    Logger::error(sprintf(
+                        'sqlauth:%s: No rows in result set. Probably wrong username/password.',
+                        $this->authId,
+                    ));                    
                     throw new Error\Error('WRONGUSERPASS');
                 }
 
