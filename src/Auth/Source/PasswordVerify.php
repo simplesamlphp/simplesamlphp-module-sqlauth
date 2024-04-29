@@ -109,7 +109,7 @@ class PasswordVerify extends SQL
                     Logger::error(sprintf(
                         'sqlauth:%s: No rows in result set. Probably wrong username/password.',
                         $this->authId,
-                    ));                    
+                    ));
                     throw new Error\Error('WRONGUSERPASS');
                 }
 
@@ -123,7 +123,7 @@ class PasswordVerify extends SQL
                             $this->authId,
                             $this->passwordhashcolumn,
                         ));
-                        throw new Error\Error('WRONGUSERPASS');                        
+                        throw new Error\Error('WRONGUSERPASS');
                     }
                     if ($pwhash) {
                         if ($pwhash != $row[$this->passwordhashcolumn]) {
@@ -152,7 +152,7 @@ class PasswordVerify extends SQL
                         throw new Error\Error('WRONGUSERPASS');
                     }
                 }
-                
+
                 /**
                  * VERIFICATION!
                  * Now to check if the password the user supplied is actually valid
