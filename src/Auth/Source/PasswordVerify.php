@@ -118,9 +118,12 @@ class PasswordVerify extends SQL
                         !array_key_exists($this->passwordhashcolumn, $row)
                         || is_null($row[$this->passwordhashcolumn])
                     ) {
-                        Logger::error('sqlauth:' . $this->authId .
-                                      ': column ' . $this->passwordhashcolumn . ' must be in every result tuple.');
-                        throw new \SimpleSAML\Error\Error('WRONGUSERPASS');
+                        Logger::error(sprintf(
+                            'sqlauth:%s: column `%s` must be in every result tuple.',
+                            $this->authId,
+                            $this->passwordhashcolumn,
+                        ));
+                        throw new Error\Error('WRONGUSERPASS');                        
                     }
                     if ($pwhash) {
                         if ($pwhash != $row[$this->passwordhashcolumn]) {
