@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 class PasswordVerifyTest extends TestCase
 {
     private array $info = ['AuthId' => 'testAuthId'];
+
     private array $config = [
         "dsn" => 'sqlite:file::memory:?cache=shared',
         "username" => "notused",
@@ -90,7 +91,7 @@ class PasswordVerifyTest extends TestCase
     }
 
 
-    public function testBasicSingleFailedLogin()
+    public function testBasicSingleFailedLogin(): void
     {
         $this->expectException(\SimpleSAML\Error\Error::class);
         // Wrong username/password
@@ -99,7 +100,7 @@ class PasswordVerifyTest extends TestCase
         $this->assertCount(0, $ret);
     }
 
-    public function testBasicSingleFailedLoginNonExisting()
+    public function testBasicSingleFailedLoginNonExisting(): void
     {
         $this->expectException(\SimpleSAML\Error\Error::class);
         // Wrong username/password
@@ -109,7 +110,7 @@ class PasswordVerifyTest extends TestCase
     }
 
 
-    public function testBasicSingleFailedLoginNonExistingNoPassword()
+    public function testBasicSingleFailedLoginNonExistingNoPassword(): void
     {
         $this->expectException(\SimpleSAML\Error\Error::class);
         // Wrong username/password
@@ -137,7 +138,7 @@ class PasswordVerifyTest extends TestCase
         ]);
     }
 
-    public function testJoinSingleFailedLogin()
+    public function testJoinSingleFailedLogin(): void
     {
         $this->expectException(\SimpleSAML\Error\Error::class);
         // Wrong username/password
@@ -167,7 +168,7 @@ class PasswordVerifyTest extends TestCase
         ]);
     }
 
-    public function testMultiQueryFailedLogin()
+    public function testMultiQueryFailedLogin(): void
     {
         $this->expectException(\SimpleSAML\Error\Error::class);
         // Wrong username/password
