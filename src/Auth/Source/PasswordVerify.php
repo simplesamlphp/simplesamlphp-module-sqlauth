@@ -142,7 +142,7 @@ class PasswordVerify extends SQL
                  * This should never happen as the count(data) test above would have already thrown.
                  * But checking twice doesn't hurt.
                  */
-                if (is_null($pwhash)) {
+                if ($pwhash === null) {
                     if ($pwhash != $row[$this->passwordhashcolumn]) {
                         Logger::error(sprintf(
                             'sqlauth:%s: column `%s` does not contain a password hash.',

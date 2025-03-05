@@ -158,12 +158,12 @@ class SQL extends UserPassBase
     /**
      * Extract SQL columns into SAML attribute array
      *
-     * @param $attributes output place to store extracted attributes
+     * @param array $attributes output place to store extracted attributes
      * @param array  $data  Associative array from database in the format of PDO fetchAll
      * @param array  $forbiddenAttributes An array of attributes to never return
-     * @return $attributes
+     * @return array $attributes
      */
-    protected function extractAttributes(&$attributes, $data, $forbiddenAttributes = [])
+    protected function extractAttributes(array $attributes, array $data, array $forbiddenAttributes = []): array
     {
         foreach ($data as $row) {
             foreach ($row as $name => $value) {
@@ -195,8 +195,8 @@ class SQL extends UserPassBase
      * Execute the query with given parameters and return the tuples that result.
      *
      * @param string $query  SQL to execute
-     * @param array  $params parameters to the SQL query
-     * @return tuples that result
+     * @param array $params parameters to the SQL query
+     * @return array tuples that result
      */
     protected function executeQuery(PDO $db, string $query, array $params): array
     {
