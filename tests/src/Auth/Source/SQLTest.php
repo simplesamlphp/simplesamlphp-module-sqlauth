@@ -15,7 +15,10 @@ use SimpleSAML\Test\Module\sqlauth\Auth\Source\SQLWrapper;
  */
 class SQLTest extends TestCase
 {
+    /** @var array<string, string> */
     private array $info = ['AuthId' => 'testAuthId'];
+
+    /** @var array<string, string|null> */
     private array $config = [
         "dsn" => 'sqlite:file::memory:?cache=shared',
         "username" => "notused",
@@ -123,7 +126,7 @@ class SQLTest extends TestCase
         $this->assertCount(0, $ret);
     }
 
-    public function testBasicSingleFailedLogin()
+    public function testBasicSingleFailedLogin(): void
     {
         $this->expectException(\SimpleSAML\Error\Error::class);
         // Wrong username/password
@@ -150,7 +153,7 @@ class SQLTest extends TestCase
         ]);
     }
 
-    public function testJoinSingleFailedLogin()
+    public function testJoinSingleFailedLogin(): void
     {
         $this->expectException(\SimpleSAML\Error\Error::class);
         // Wrong username/password
@@ -180,7 +183,7 @@ class SQLTest extends TestCase
         ]);
     }
 
-    public function testMultiQueryFailedLogin()
+    public function testMultiQueryFailedLogin(): void
     {
         $this->expectException(\SimpleSAML\Error\Error::class);
         // Wrong username/password

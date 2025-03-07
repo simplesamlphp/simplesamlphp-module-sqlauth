@@ -15,11 +15,19 @@ use SimpleSAML\Module\sqlauth\Auth\Source\PasswordVerify;
 
 class PasswordVerifyWrapper extends PasswordVerify
 {
+    /**
+     * @param array<mixed> $info
+     * @param array<mixed> $config
+     */
     public function __construct(array $info, array $config)
     {
         parent::__construct($info, $config);
     }
 
+
+    /**
+     * @return string[]
+     */
     public function callLogin(string $username, string $password): array
     {
         return $this->login($username, $password);

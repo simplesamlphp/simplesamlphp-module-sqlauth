@@ -15,11 +15,19 @@ use SimpleSAML\Module\sqlauth\Auth\Source\SQL;
 
 class SQLWrapper extends SQL
 {
+    /**
+     * @param array<mixed> $info
+     * @param array<mixed> $config
+     */
     public function __construct(array $info, array $config)
     {
         parent::__construct($info, $config);
     }
 
+
+    /**
+     * @return array<mixed>
+     */
     public function callLogin(string $username, string $password): array
     {
         return $this->login($username, $password);

@@ -14,8 +14,10 @@ use PHPUnit\Framework\TestCase;
  */
 class PasswordVerifyTest extends TestCase
 {
+    /** @var array<string, string> */
     private array $info = ['AuthId' => 'testAuthId'];
 
+    /** @var array<string, string|null> */
     private array $config = [
         "dsn" => 'sqlite:file::memory:?cache=shared',
         "username" => "notused",

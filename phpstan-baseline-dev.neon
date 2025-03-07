@@ -1,0 +1,21 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Parameter \\#1 \\$array of function asort expects array, string given\\.$#"
+			count: 4
+			path: tests/src/Auth/Source/PasswordVerifyTest.php
+
+		-
+			message: "#^Property SimpleSAML\\\\Test\\\\Module\\\\sqlauth\\\\Auth\\\\Source\\\\PasswordVerifyTest\\:\\:\\$config \\(array\\<string, string\\|null\\>\\) does not accept array\\<string, array\\<int, string\\>\\|string\\|null\\>\\.$#"
+			count: 4
+			path: tests/src/Auth/Source/PasswordVerifyTest.php
+
+		-
+			message: "#^Parameter \\#1 \\$array of function asort expects array, mixed given\\.$#"
+			count: 4
+			path: tests/src/Auth/Source/SQLTest.php
+
+		-
+			message: "#^Property SimpleSAML\\\\Test\\\\Module\\\\sqlauth\\\\Auth\\\\Source\\\\SQLTest\\:\\:\\$config \\(array\\<string, string\\|null\\>\\) does not accept array\\<string, array\\<int, string\\>\\|string\\|null\\>\\.$#"
+			count: 4
+			path: tests/src/Auth/Source/SQLTest.php
