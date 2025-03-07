@@ -161,9 +161,9 @@ class SQL extends UserPassBase
      * @param array $attributes output place to store extracted attributes
      * @param array  $data  Associative array from database in the format of PDO fetchAll
      * @param array  $forbiddenAttributes An array of attributes to never return
-     * @return array $attributes
+     * @return array &$attributes
      */
-    protected function extractAttributes(array $attributes, array $data, array $forbiddenAttributes = []): array
+    protected function extractAttributes(array &$attributes, array $data, array $forbiddenAttributes = []): array
     {
         foreach ($data as $row) {
             foreach ($row as $name => $value) {
