@@ -38,7 +38,7 @@ Options
 Writing a Query / Queries
 -------------------------
 
-A `query` can be either a single string with an SQL statement, or an array of queries, run in order. That single string (or the first query in the array) is the "authentication query" - the parameters `:username` and `:password` are available and should be evaluated by the query for authenticaion purposes. If the username/password is incorrect, the "authentication query" should return no rows. The rows returned represent attributes to be returned.
+A `query` can be either a single string with an SQL statement, or an array of queries, run in order. That single string (or the first query in the array) is the "authentication query" - the parameters `:username` and `:password` are available and should be evaluated by the query for authentication purposes. If the username/password is incorrect, the "authentication query" should return no rows. The rows returned represent attributes to be returned.
 
 Taking this example schema:
 
