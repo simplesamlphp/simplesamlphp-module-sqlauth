@@ -38,7 +38,7 @@ Options
 Writing a Query / Queries
 -------------------------
 
-A `query` can be either a single string with an SQL statement, or an array of queries, run in order. That single string (or the first query in the array) is the "authentication query" - the parameters `:username` and `:password` are available and should be evaluated by the query for authenticaion purposes. If the username/password is incorrect, the "authentication query" should return no rows. The rows returned represent attributes to be returned.
+A `query` can be either a single string with an SQL statement, or an array of queries, run in order. That single string (or the first query in the array) is the "authentication query" - the parameters `:username` and `:password` are available and should be evaluated by the query for authentication purposes. If the username/password is incorrect, the "authentication query" should return no rows. The rows returned represent attributes to be returned.
 
 Taking this example schema:
 
@@ -179,6 +179,37 @@ Example query - SHA512 of salt + password, stored as salt (32 bytes) + sha256(sa
         512
     )
 ```
+
+Connecting with UNIX Domain Sockets (Local Sockets)
+---------------------------------------------------
+
+When on a UNIX-like platform (Linux, *BSD, etc), and when your SQL database server is running on the same host as the web server
+hosting SimpleSAMLphp, it is possible to use UNIX domain sockets instead of TCP sockets for the database connection. This
+configuration should result in marginally better performance and security (when configured correctly).
+
+Here is an example using PostgreSQL:
+
+```php
+    'example-unix-socket-sql' => [
+        'sqlauth:SQL',
+        'dsn' => 'pgsql:host=/var/run/postgresql;dbname=simplesaml',
+        'username' => 'www-data',
+        'password' => 'this-is-ignored',
+        'query' => 'SELECT uid, givenName, email, eduPersonPrincipalName FROM users WHERE uid = :username ' .
+            'AND password = SHA2(CONCAT((SELECT salt FROM users WHERE uid = :username), :password), 256);',
+    ],
+```
+
+Configuration is largely the same as TCP sockets (documented above), with the differences being:
+
+`dsn`
+:   The key difference is that the `host` parameter. This needs to be the **directory** that contains the socket file used to connect to the PostgreSQL server. For example, actual socket file might be `/var/run/postgresql/.s.PGSQL.5432`, so `host=/var/run/postgresql` is the parameter that you need. If you're struggling to find where the socket is, the `unix_socket_directories` parameter in the server `postgresql.conf` is where that location is configured.
+
+`username`
+:   The UNIX username of the user running SimpleSAMLphp (ie. the web server user or the php-fpm user, depending on your setup).
+
+`password`
+:   Required, but the value you specify is ignored (so you can put any placeholder string value in there). All authentication for UNIX domain sockets are done by the operating system kernel.
 
 Security considerations
 -----------------------
