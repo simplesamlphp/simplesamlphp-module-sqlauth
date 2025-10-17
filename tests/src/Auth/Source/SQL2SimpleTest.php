@@ -8,29 +8,35 @@ use PDO;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Test for the core:AttributeLimit filter.
- *
+ * The scenario for this test case is a single database of customers who have their
+ * metadata in a single database. This is essentially the same tests as SQLTest, but
+ * using the SQLv2 configuration and code, not the SQL1 code or SQL1Compat interface.
+ * 
  * @covers \SimpleSAML\Module\core\Auth\Process\AttributeLimit
  */
-class SQLTest extends TestCase
+class SQL2SimpleTest extends TestCase
 {
-    // Subclasses can override this to test other wrapper classes
-    protected string $wrapperClassName = '\SimpleSAML\Test\Module\sqlauth\Auth\Source\SQLWrapper';
-
-    /** @var array<string, string> */
     private array $info = ['AuthId' => 'testAuthId'];
-
-    /** @var array<string, string|null> */
     private array $config = [
-        "dsn" => 'sqlite:file::memory:?cache=shared',
-        "username" => "notused",
-        "password" => "notused",
-        "query" => null, // Filled out by each test case
+        "databases" => [
+            "defaultdb" => [
+                "dsn" => 'sqlite:file:defaultdb?mode=memory&cache=shared',
+                "username" => "notused",
+                "password" => "notused",
+            ],
+        ],
+        "auth_queries" => [
+            "auth_query" => [
+                "database" => "defaultdb",
+                "query" => null, // Filled out by each test case
+            ],
+        ],
     ];
 
     public static function setUpBeforeClass(): void
     {
-        $pdo = new PDO('sqlite:file::memory:?cache=shared', null, null, [PDO::ATTR_PERSISTENT => true]);
+        $pdo = new PDO('sqlite:file:defaultdb?mode=memory&cache=shared', null, null, [PDO::ATTR_PERSISTENT => true]);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
         $pdo->exec("DROP TABLE IF EXISTS users");
         $pdo->exec("DROP TABLE IF EXISTS usergroups");
@@ -82,8 +88,8 @@ class SQLTest extends TestCase
     public function testBasicSingleSuccess(): void
     {
         // Correct username/password
-        $this->config['query'] = "select givenName, email from users where uid=:username and password=:password";
-        $ret = (new $this->wrapperClassName($this->info, $this->config))->callLogin('bob', 'password');
+        $this->config['auth_queries']['auth_query']['query'] = "select givenName, email from users where uid=:username and password=:password";
+        $ret = (new SQL2Wrapper($this->info, $this->config))->callLogin('bob', 'password');
         asort($ret);
         $this->assertCount(2, $ret);
         $this->assertEquals($ret, [
@@ -95,9 +101,9 @@ class SQLTest extends TestCase
     public function testBasicSingleUsernameRegexSuccess(): void
     {
         // Correct username/password
-        $this->config['query'] = "select givenName, email from users where uid=:username and password=:password";
-        $this->config['username_regex'] = '/^[a-z]+$/'; // Username must be a single lower case word
-        $ret = (new $this->wrapperClassName($this->info, $this->config))->callLogin('bob', 'password');
+        $this->config['auth_queries']['auth_query']['query'] = "select givenName, email from users where uid=:username and password=:password";
+        $this->config['auth_queries']['auth_query']['username_regex'] = '/^[a-z]+$/'; // Username must be a single lower case word
+        $ret = (new SQL2Wrapper($this->info, $this->config))->callLogin('bob', 'password');
         asort($ret);
         $this->assertCount(2, $ret);
         $this->assertEquals($ret, [
@@ -110,9 +116,9 @@ class SQLTest extends TestCase
     {
         $this->expectException(\SimpleSAML\Error\Error::class);
         // Correct username/password, but doesn't match the username regex
-        $this->config['query'] = "select givenName, email from users where uid=:username and password=:password";
-        $this->config['username_regex'] = '/^\d+$/'; // Username must be a non-negative integer
-        $ret = (new $this->wrapperClassName($this->info, $this->config))->callLogin('bob', 'password');
+        $this->config['auth_queries']['auth_query']['query'] = "select givenName, email from users where uid=:username and password=:password";
+        $this->config['auth_queries']['auth_query']['username_regex'] = '/^\d+$/'; // Username must be a non-negative integer
+        $ret = (new SQL2Wrapper($this->info, $this->config))->callLogin('bob', 'password');
         asort($ret);
         $this->assertCount(0, $ret);
     }
@@ -121,9 +127,9 @@ class SQLTest extends TestCase
     {
         $this->expectException(\SimpleSAML\Error\Error::class);
         // Correct username/password, but doesn't match the username regex
-        $this->config['query'] = "select givenName, email from users where uid=:username and password=:password";
-        $this->config['username_regex'] = '/^\d+$/'; // Username must be a non-negative integer
-        $ret = (new $this->wrapperClassName($this->info, $this->config))->callLogin('henry', 'password');
+        $this->config['auth_queries']['auth_query']['query'] = "select givenName, email from users where uid=:username and password=:password";
+        $this->config['auth_queries']['auth_query']['username_regex'] = '/^\d+$/'; // Username must be a non-negative integer
+        $ret = (new SQL2Wrapper($this->info, $this->config))->callLogin('henry', 'password');
         asort($ret);
         $this->assertCount(0, $ret);
     }
@@ -132,19 +138,19 @@ class SQLTest extends TestCase
     {
         $this->expectException(\SimpleSAML\Error\Error::class);
         // Wrong username/password
-        $this->config['query'] = "select givenName, email from users where uid=:username and password=:password";
-        $ret = (new $this->wrapperClassName($this->info, $this->config))->callLogin('alice', 'wrong');
+        $this->config['auth_queries']['auth_query']['query'] = "select givenName, email from users where uid=:username and password=:password";
+        $ret = (new SQL2Wrapper($this->info, $this->config))->callLogin('alice', 'wrong');
         $this->assertCount(0, $ret);
     }
 
     public function testJoinSingleSuccess(): void
     {
         // Correct username/password
-        $this->config['query'] = "
+        $this->config['auth_queries']['auth_query']['query'] = "
             select u.givenName, u.email, ug.groupname
             from users u left join usergroups ug on (u.uid=ug.uid)
             where u.uid=:username and u.password=:password";
-        $ret = (new $this->wrapperClassName($this->info, $this->config))->callLogin('bob', 'password');
+        $ret = (new SQL2Wrapper($this->info, $this->config))->callLogin('bob', 'password');
         asort($ret);
         asort($ret['groupname']);
         $this->assertCount(3, $ret);
@@ -159,22 +165,27 @@ class SQLTest extends TestCase
     {
         $this->expectException(\SimpleSAML\Error\Error::class);
         // Wrong username/password
-        $this->config['query'] = "
+        $this->config['auth_queries']['auth_query']['query'] = "
             select u.givenName, u.email, ug.groupname
             from users u left join usergroups ug on (u.uid=ug.uid)
             where u.uid=:username and u.password=:password";
-        $ret = (new $this->wrapperClassName($this->info, $this->config))->callLogin('alice', 'wrong');
+        $ret = (new SQL2Wrapper($this->info, $this->config))->callLogin('alice', 'wrong');
         $this->assertCount(0, $ret);
     }
 
     public function testMultiQuerySuccess(): void
     {
         // Correct username/password
-        $this->config['query'] = [
-            "select givenName, email from users where uid=:username and password=:password",
-            "select groupname from usergroups where uid=:username",
+        $this->config['auth_queries']['auth_query']['query'] = 
+            "select givenName, email from users where uid=:username and password=:password";
+        $this->config['attr_queries'] = [
+            [
+                'database' => 'defaultdb',
+                'query' => "select groupname from usergroups where uid=:username",
+            ]
         ];
-        $ret = (new $this->wrapperClassName($this->info, $this->config))->callLogin('bob', 'password');
+
+        $ret = (new SQL2Wrapper($this->info, $this->config))->callLogin('bob', 'password');
         asort($ret);
         asort($ret['groupname']);
         $this->assertCount(3, $ret);
@@ -189,23 +200,35 @@ class SQLTest extends TestCase
     {
         $this->expectException(\SimpleSAML\Error\Error::class);
         // Wrong username/password
-        $this->config['query'] = [
-            "select givenName, email from users where uid=:username and password=:password",
-            "select groupname from usergroups where uid=:username",
+        $this->config['auth_queries']['auth_query']['query'] = 
+            "select givenName, email from users where uid=:username and password=:password";
+        $this->config['attr_queries'] = [
+            [
+                'database' => 'defaultdb',
+                'query' => "select groupname from usergroups where uid=:username",
+            ]
         ];
-        $ret = (new $this->wrapperClassName($this->info, $this->config))->callLogin('alice', 'wrong');
+        $ret = (new SQL2Wrapper($this->info, $this->config))->callLogin('alice', 'wrong');
         $this->assertCount(0, $ret);
     }
 
     public function testMultiQuerySubsequentNoRowsSuccess(): void
     {
         // Correct username/password. Second query returns no rows, third query returns just one row
-        $this->config['query'] = [
-            "select givenName, email from users where uid=:username and password=:password",
-            "select groupname from usergroups where uid=:username and groupname like '%nomatch%'",
-            "select groupname from usergroups where uid=:username and groupname like 'stud%'",
+        $this->config['auth_queries']['auth_query']['query'] = 
+            "select givenName, email from users where uid=:username and password=:password";
+        $this->config['attr_queries'] = [
+            [
+                'database' => 'defaultdb',
+                'query' => "select groupname from usergroups where uid=:username and groupname like '%nomatch%'",
+            ],
+            [
+                'database' => 'defaultdb',
+                'query' => "select groupname from usergroups where uid=:username and groupname like 'stud%'",
+            ],
         ];
-        $ret = (new $this->wrapperClassName($this->info, $this->config))->callLogin('bob', 'password');
+
+        $ret = (new SQL2Wrapper($this->info, $this->config))->callLogin('bob', 'password');
         asort($ret);
         asort($ret['groupname']);
         $this->assertCount(3, $ret);
@@ -219,12 +242,19 @@ class SQLTest extends TestCase
     public function testMultiQuerySubsequentAppendSuccess(): void
     {
         // Correct username/password. Second query returns a row, third query appends one row
-        $this->config['query'] = [
-            "select givenName, email from users where uid=:username and password=:password",
-            "select groupname from usergroups where uid=:username and groupname like 'stud%'",
-            "select groupname from usergroups where uid=:username and groupname like '%sers'",
+        $this->config['auth_queries']['auth_query']['query'] = 
+            "select givenName, email from users where uid=:username and password=:password";
+        $this->config['attr_queries'] = [
+            [
+                'database' => 'defaultdb',
+                'query' => "select groupname from usergroups where uid=:username and groupname like 'stud%'",
+            ],
+            [
+                'database' => 'defaultdb',
+                'query' => "select groupname from usergroups where uid=:username and groupname like '%sers'",
+            ],
         ];
-        $ret = (new $this->wrapperClassName($this->info, $this->config))->callLogin('bob', 'password');
+        $ret = (new SQL2Wrapper($this->info, $this->config))->callLogin('bob', 'password');
         asort($ret);
         asort($ret['groupname']);
         $this->assertCount(3, $ret);
