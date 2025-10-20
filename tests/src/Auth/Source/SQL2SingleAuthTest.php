@@ -20,10 +20,13 @@ class SQL2SingleAuthTest extends TestCase
 {
     private array $info = ['AuthId' => 'testAuthId'];
 
+    protected string $extraSqlSelectColumns = '';
+    protected string $extraSqlAndClauses = ' and password=:password';
+
     /* Different tests require different combinations of databases, auth queries and attr queries.
      * This function returns a config with the requested number of each.
      */
-    private function getConfig(int $numDatabases, int $numAuthQueries, array $authQueryAttributes, int $numAttrQueries): array
+    protected function getConfig(int $numDatabases, int $numAuthQueries, array $authQueryAttributes, int $numAttrQueries): array
     {
         $config = [
             "databases" => [
@@ -46,13 +49,13 @@ class SQL2SingleAuthTest extends TestCase
             "auth_queries" => [
                 "auth_query_id" => [
                     "database" => "authdb",
-                    "query" => "select uid, givenName, email from users where uid=:username and password=:password",
+                    "query" => "select uid, givenName, email " . $this->extraSqlSelectColumns . " from users where uid=:username" . $this->extraSqlAndClauses,
                     "username_regex" => '/^\\d+$/',
                     "extract_userid_from" => 'uid',
                 ],
                 "auth_query_email" => [
                     "database" => "authdb",
-                    "query" => "select uid, givenName, email from users where email=:username and password=:password",
+                    "query" => "select uid, givenName, email " . $this->extraSqlSelectColumns . " from users where email=:username" . $this->extraSqlAndClauses,
                     "username_regex" => '/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/',
                     "extract_userid_from" => 'uid',
                 ],

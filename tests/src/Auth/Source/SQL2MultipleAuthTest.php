@@ -25,71 +25,79 @@ use PHPUnit\Framework\TestCase;
 class SQL2MultipleAuthTest extends TestCase
 {
     private array $info = ['AuthId' => 'testAuthId'];
-    private array $config = [
-        "databases" => [
-            "studentsdb" => [
-                "dsn" => 'sqlite:file:studentsdb?mode=memory&cache=shared',
-                "username" => "notused",
-                "password" => "notused",
-            ],
-            "physics_staffdb" => [
-                "dsn" => 'sqlite:file:physics_staffdb?mode=memory&cache=shared',
-                "username" => "notused",
-                "password" => "notused",
-            ],
-            "staffdb" => [
-                "dsn" => 'sqlite:file:staffdb?mode=memory&cache=shared',
-                "username" => "notused",
-                "password" => "notused",
-            ],
-        ],
-        "auth_queries" => [
-            "auth_query_students" => [
-                "database" => "studentsdb",
-                "query" => "select studentid, givenName, lastName, email, course, year from students where email=:username and password=:password",
-                "username_regex" => '/^[a-zA-Z0-9._%+-]+@student\.example\.edu$/',
-                "extract_userid_from" => 'studentid',
-            ],
+    protected array $config = []; // Filled out in setUp()
 
-            // We specify the physics_staffdb auth query before the staffdb one, so that if a user exists in both
-            // staff databases, they will be authenticated against the physics_staffdb one.
-            "auth_query_physics_staff" => [
-                "database" => "physics_staffdb",
-                "query" => "select psid as uid, CASE WHEN typically_wears_matching_socks=true THEN 'true' ELSE 'false' END as \"typically_wears_matching_socks\" from staff where email=:username and password=:password",
-                "username_regex" => '/^[a-zA-Z0-9._%+-]+@example\.edu$/',
-                "extract_userid_from" => 'uid',
-            ],
+    protected string $extraSqlSelectColumns = '';
+    protected string $extraSqlAndClauses = ' and password=:password';
 
-            "auth_query_staff" => [
-                "database" => "staffdb",
-                "query" => "select uid, givenName, lastName, email, department from staff where email=:username and password=:password",
-                "username_regex" => '/^[a-zA-Z0-9._%+-]+@example\.edu$/',
-                "extract_userid_from" => 'uid',
+    public function setUp(): void
+    {
+        $this->config = [
+            "databases" => [
+                "studentsdb" => [
+                    "dsn" => 'sqlite:file:studentsdb?mode=memory&cache=shared',
+                    "username" => "notused",
+                    "password" => "notused",
+                ],
+                "physics_staffdb" => [
+                    "dsn" => 'sqlite:file:physics_staffdb?mode=memory&cache=shared',
+                    "username" => "notused",
+                    "password" => "notused",
+                ],
+                "staffdb" => [
+                    "dsn" => 'sqlite:file:staffdb?mode=memory&cache=shared',
+                    "username" => "notused",
+                    "password" => "notused",
+                ],
             ],
-        ],
-        "attr_queries" => [
-            [
-                'database' => 'staffdb',
-                'query' => "select givenName, lastName, email, department from staff where uid=:userid",
-                'only_for_auth' => ['auth_query_staff', 'auth_query_physics_staff'],
+            "auth_queries" => [
+                "auth_query_students" => [
+                    "database" => "studentsdb",
+                    "query" => "select studentid, givenName, lastName, email, course, year " . $this->extraSqlSelectColumns . " from students where email=:username" . $this->extraSqlAndClauses,
+                    "username_regex" => '/^[a-zA-Z0-9._%+-]+@student\.example\.edu$/',
+                    "extract_userid_from" => 'studentid',
+                ],
+
+                // We specify the physics_staffdb auth query before the staffdb one, so that if a user exists in both
+                // staff databases, they will be authenticated against the physics_staffdb one.
+                "auth_query_physics_staff" => [
+                    "database" => "physics_staffdb",
+                    "query" => "select psid as uid, CASE WHEN typically_wears_matching_socks=true THEN 'true' ELSE 'false' END as \"typically_wears_matching_socks\" " . $this->extraSqlSelectColumns . " from staff where email=:username" . $this->extraSqlAndClauses,
+                    "username_regex" => '/^[a-zA-Z0-9._%+-]+@example\.edu$/',
+                    "extract_userid_from" => 'uid',
+                ],
+
+                "auth_query_staff" => [
+                    "database" => "staffdb",
+                    "query" => "select uid, givenName, lastName, email, department " . $this->extraSqlSelectColumns . " from staff where email=:username" . $this->extraSqlAndClauses,
+                    "username_regex" => '/^[a-zA-Z0-9._%+-]+@example\.edu$/',
+                    "extract_userid_from" => 'uid',
+                ],
             ],
-            [
-                'database' => 'staffdb',
-                'query' => "select role from staff_roles where uid=:userid",
-                'only_for_auth' => ['auth_query_staff', 'auth_query_physics_staff'],
+            "attr_queries" => [
+                [
+                    'database' => 'staffdb',
+                    'query' => "select givenName, lastName, email, department from staff where uid=:userid",
+                    'only_for_auth' => ['auth_query_staff', 'auth_query_physics_staff'],
+                ],
+                [
+                    'database' => 'staffdb',
+                    'query' => "select role from staff_roles where uid=:userid",
+                    'only_for_auth' => ['auth_query_staff', 'auth_query_physics_staff'],
+                ],
+                [
+                    'database' => 'physics_staffdb',
+                    'query' => "select qualification from staff_qualifications where psid=:userid order by qualification desc",
+                    'only_for_auth' => ['auth_query_physics_staff'],
+                ],
+                [
+                    'database' => 'studentsdb',
+                    'query' => "select unit_code from units_enrolled where studentid=:userid",
+                    'only_for_auth' => ['auth_query_students'],
+                ],
             ],
-            [
-                'database' => 'physics_staffdb',
-                'query' => "select qualification from staff_qualifications where psid=:userid order by qualification desc",
-                'only_for_auth' => ['auth_query_physics_staff'],
-            ],
-            [
-                'database' => 'studentsdb',
-                'query' => "select unit_code from units_enrolled where studentid=:userid",
-                'only_for_auth' => ['auth_query_students'],
-            ],
-        ],
-    ];
+        ];
+    }
 
     public static function setUpBeforeClass(): void
     {
@@ -257,7 +265,6 @@ class SQL2MultipleAuthTest extends TestCase
         // Correct username/password for physics staff
         $ret = (new SQL2Wrapper($this->info, $this->config))->callLogin('mallory.mallory@example.edu', 'password');
         asort($ret);
-        var_dump($ret);
         $this->assertCount(8, $ret);
         $this->assertCount(1, $ret['role']);
         $this->assertEquals($ret, [

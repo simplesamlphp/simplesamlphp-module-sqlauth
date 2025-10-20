@@ -17,21 +17,36 @@ use PHPUnit\Framework\TestCase;
 class SQL2SimpleTest extends TestCase
 {
     private array $info = ['AuthId' => 'testAuthId'];
-    private array $config = [
-        "databases" => [
-            "defaultdb" => [
-                "dsn" => 'sqlite:file:defaultdb?mode=memory&cache=shared',
-                "username" => "notused",
-                "password" => "notused",
+    protected array $config = []; // Filled out in setUp()
+
+    protected string $extraSqlSelectColumns = '';
+    protected string $extraSqlAndClauses = ' and password=:password';
+
+    public function setUp(): void
+    {
+        $this->config = [
+            "databases" => [
+                "defaultdb" => [
+                    "dsn" => 'sqlite:file:defaultdb?mode=memory&cache=shared',
+                    "username" => "notused",
+                    "password" => "notused",
+                ],
             ],
-        ],
-        "auth_queries" => [
-            "auth_query" => [
-                "database" => "defaultdb",
-                "query" => null, // Filled out by each test case
+            "auth_queries" => [
+                "auth_query" => [
+                    "database" => "defaultdb",
+                    "query" => null, // Filled out by each test case
+                ],
             ],
-        ],
-    ];
+        ];
+    }
+
+    protected static function transformPassword(string $password): string
+    {
+        // In this simple test, passwords are stored in plaintext, so no transformation is needed.
+        // The SQL2PasswordVerifySimpleTest subclass override this to hash the password appropriately.
+        return $password;
+    }
 
     public static function setUpBeforeClass(): void
     {
@@ -88,7 +103,7 @@ class SQL2SimpleTest extends TestCase
     public function testBasicSingleSuccess(): void
     {
         // Correct username/password
-        $this->config['auth_queries']['auth_query']['query'] = "select givenName, email from users where uid=:username and password=:password";
+        $this->config['auth_queries']['auth_query']['query'] = "select givenName, email " . $this->extraSqlSelectColumns . " from users where uid=:username" . $this->extraSqlAndClauses;
         $ret = (new SQL2Wrapper($this->info, $this->config))->callLogin('bob', 'password');
         asort($ret);
         $this->assertCount(2, $ret);
@@ -101,7 +116,7 @@ class SQL2SimpleTest extends TestCase
     public function testBasicSingleUsernameRegexSuccess(): void
     {
         // Correct username/password
-        $this->config['auth_queries']['auth_query']['query'] = "select givenName, email from users where uid=:username and password=:password";
+        $this->config['auth_queries']['auth_query']['query'] = "select givenName, email " . $this->extraSqlSelectColumns . " from users where uid=:username" . $this->extraSqlAndClauses;
         $this->config['auth_queries']['auth_query']['username_regex'] = '/^[a-z]+$/'; // Username must be a single lower case word
         $ret = (new SQL2Wrapper($this->info, $this->config))->callLogin('bob', 'password');
         asort($ret);
@@ -116,7 +131,7 @@ class SQL2SimpleTest extends TestCase
     {
         $this->expectException(\SimpleSAML\Error\Error::class);
         // Correct username/password, but doesn't match the username regex
-        $this->config['auth_queries']['auth_query']['query'] = "select givenName, email from users where uid=:username and password=:password";
+        $this->config['auth_queries']['auth_query']['query'] = "select givenName, email " . $this->extraSqlSelectColumns . " from users where uid=:username" . $this->extraSqlAndClauses;
         $this->config['auth_queries']['auth_query']['username_regex'] = '/^\d+$/'; // Username must be a non-negative integer
         $ret = (new SQL2Wrapper($this->info, $this->config))->callLogin('bob', 'password');
         asort($ret);
@@ -127,7 +142,7 @@ class SQL2SimpleTest extends TestCase
     {
         $this->expectException(\SimpleSAML\Error\Error::class);
         // Correct username/password, but doesn't match the username regex
-        $this->config['auth_queries']['auth_query']['query'] = "select givenName, email from users where uid=:username and password=:password";
+        $this->config['auth_queries']['auth_query']['query'] = "select givenName, email " . $this->extraSqlSelectColumns . " from users where uid=:username" . $this->extraSqlAndClauses;
         $this->config['auth_queries']['auth_query']['username_regex'] = '/^\d+$/'; // Username must be a non-negative integer
         $ret = (new SQL2Wrapper($this->info, $this->config))->callLogin('henry', 'password');
         asort($ret);
@@ -138,7 +153,7 @@ class SQL2SimpleTest extends TestCase
     {
         $this->expectException(\SimpleSAML\Error\Error::class);
         // Wrong username/password
-        $this->config['auth_queries']['auth_query']['query'] = "select givenName, email from users where uid=:username and password=:password";
+        $this->config['auth_queries']['auth_query']['query'] = "select givenName, email " . $this->extraSqlSelectColumns . " from users where uid=:username" . $this->extraSqlAndClauses;
         $ret = (new SQL2Wrapper($this->info, $this->config))->callLogin('alice', 'wrong');
         $this->assertCount(0, $ret);
     }
@@ -147,9 +162,9 @@ class SQL2SimpleTest extends TestCase
     {
         // Correct username/password
         $this->config['auth_queries']['auth_query']['query'] = "
-            select u.givenName, u.email, ug.groupname
+            select u.givenName, u.email, ug.groupname" . $this->extraSqlSelectColumns . " 
             from users u left join usergroups ug on (u.uid=ug.uid)
-            where u.uid=:username and u.password=:password";
+            where u.uid=:username" . $this->extraSqlAndClauses;
         $ret = (new SQL2Wrapper($this->info, $this->config))->callLogin('bob', 'password');
         asort($ret);
         asort($ret['groupname']);
@@ -166,9 +181,9 @@ class SQL2SimpleTest extends TestCase
         $this->expectException(\SimpleSAML\Error\Error::class);
         // Wrong username/password
         $this->config['auth_queries']['auth_query']['query'] = "
-            select u.givenName, u.email, ug.groupname
+            select u.givenName, u.email, ug.groupname" . $this->extraSqlSelectColumns . " 
             from users u left join usergroups ug on (u.uid=ug.uid)
-            where u.uid=:username and u.password=:password";
+            where u.uid=:username" . $this->extraSqlAndClauses;
         $ret = (new SQL2Wrapper($this->info, $this->config))->callLogin('alice', 'wrong');
         $this->assertCount(0, $ret);
     }
@@ -177,7 +192,7 @@ class SQL2SimpleTest extends TestCase
     {
         // Correct username/password
         $this->config['auth_queries']['auth_query']['query'] = 
-            "select givenName, email from users where uid=:username and password=:password";
+            "select givenName, email " . $this->extraSqlSelectColumns . " from users where uid=:username" . $this->extraSqlAndClauses;
         $this->config['attr_queries'] = [
             [
                 'database' => 'defaultdb',
@@ -201,7 +216,7 @@ class SQL2SimpleTest extends TestCase
         $this->expectException(\SimpleSAML\Error\Error::class);
         // Wrong username/password
         $this->config['auth_queries']['auth_query']['query'] = 
-            "select givenName, email from users where uid=:username and password=:password";
+            "select givenName, email " . $this->extraSqlSelectColumns . " from users where uid=:username" . $this->extraSqlAndClauses;
         $this->config['attr_queries'] = [
             [
                 'database' => 'defaultdb',
@@ -216,7 +231,7 @@ class SQL2SimpleTest extends TestCase
     {
         // Correct username/password. Second query returns no rows, third query returns just one row
         $this->config['auth_queries']['auth_query']['query'] = 
-            "select givenName, email from users where uid=:username and password=:password";
+            "select givenName, email " . $this->extraSqlSelectColumns . " from users where uid=:username" . $this->extraSqlAndClauses;
         $this->config['attr_queries'] = [
             [
                 'database' => 'defaultdb',
@@ -243,7 +258,7 @@ class SQL2SimpleTest extends TestCase
     {
         // Correct username/password. Second query returns a row, third query appends one row
         $this->config['auth_queries']['auth_query']['query'] = 
-            "select givenName, email from users where uid=:username and password=:password";
+            "select givenName, email " . $this->extraSqlSelectColumns . " from users where uid=:username" . $this->extraSqlAndClauses;
         $this->config['attr_queries'] = [
             [
                 'database' => 'defaultdb',

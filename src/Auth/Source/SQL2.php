@@ -179,6 +179,14 @@ class SQL2 extends UserPassBase
                     $this->authQueries[$authQueryName]['extract_userid_from'] = $authQueryConfig['extract_userid_from'];
                 }
 
+                if (array_key_exists('password_verify_hash_column', $authQueryConfig)) {
+                    if (!is_string($authQueryConfig['password_verify_hash_column'])) {
+                        throw new Exception('Optional parameter \'password_verify_hash_column\' for authentication source ' .
+                            $this->authId . ' was provided and is expected to be a string. Instead it was: ' .
+                            var_export($authQueryConfig['password_verify_hash_column'], true));
+                    }
+                    $this->authQueries[$authQueryName]['password_verify_hash_column'] = $authQueryConfig['password_verify_hash_column'];
+                }
             }
         } else {
             throw new Exception('Missing required attribute \'auth_queries\' for authentication source ' . $this->authId);
@@ -408,7 +416,14 @@ class SQL2 extends UserPassBase
             $db = $this->connect($queryConfig['database']);
 
             try {
-                $data = $this->executeQuery($db, $queryConfig['query'], ['username' => $username, 'password' => $password]);
+                if (array_key_exists('password_verify_hash_column', $queryConfig)) {
+                    // We will verify the password using password_verify() later, so we do not
+                    // pass the password to the query.
+                    $data = $this->executeQuery($db, $queryConfig['query'], ['username' => $username]);
+                } else {
+                    // Pass both username and password to the query
+                    $data = $this->executeQuery($db, $queryConfig['query'], ['username' => $username, 'password' => $password]);
+                }
             } catch (PDOException $e) {
                 Logger::error('sqlauth:' . $this->authId . ': Auth query ' . $queryname .
                               ' failed with error: ' . $e->getMessage());
@@ -417,14 +432,64 @@ class SQL2 extends UserPassBase
 
             // If we got any rows, the authentication succeeded. If not, try the next query.
             if (count($data) > 0) {
+                /* This is where we need to run password_verify() if we are using password_verify() to
+                 * authenticate hashed passwords that are only stored in the database. */
+                if (array_key_exists('password_verify_hash_column', $queryConfig)) {
+                    $hashColumn = $queryConfig['password_verify_hash_column'];
+                    if (!array_key_exists($hashColumn, $data[0])) {
+                        Logger::error('sqlauth:' . $this->authId . ': Auth query ' . $queryname .
+                                     ' did not return expected hash column \'' . $hashColumn . '\'');
+                        throw new Error\Error('WRONGUSERPASS');
+                    }
+
+                    $passwordHash = null;
+                    foreach ($data as $row) {
+                        if ((!array_key_exists($hashColumn, $row)) || is_null($row[$hashColumn])) {
+                            Logger::error(sprintf(
+                                'sqlauth:%s: column `%s` must be in every result tuple.',
+                                $this->authId,
+                                $hashColumn,
+                            ));
+                            throw new Error\Error('WRONGUSERPASS');
+                        }
+                        if ($passwordHash === null) {
+                            $passwordHash = $row[$hashColumn];
+                        } elseif ($passwordHash != $row[$hashColumn]) {
+                            Logger::error(sprintf(
+                                'sqlauth:%s: column %s must be THE SAME in every result tuple.',
+                                $this->authId,
+                                $hashColumn,
+                            ));
+                            throw new Error\Error('WRONGUSERPASS');
+                        }
+                    }
+
+                    if (($passwordHash === null) || (!password_verify($password, $passwordHash))) {
+                        Logger::error('sqlauth:' . $this->authId . ': Auth query ' . $queryname .
+                                     ' password verification failed');
+                        /* Authentication with verify_password() failed, however that only means that
+                         * this auth query did not succeed. We should try the next auth query if any. */
+                        continue;
+                    }
+
+                    Logger::debug('sqlauth:' . $this->authId . ': Auth query ' . $queryname .
+                                 ' password verification using password_verify() succeeded');
+                }
+
                 Logger::debug('sqlauth:' . $this->authId . ': Auth query ' . $queryname .
                              ' succeeded with ' . count($data) . ' rows');
                 $queryConfig['_winning_auth_query'] = true;
+
                 if (array_key_exists('extract_userid_from', $queryConfig)) {
                     $queryConfig['_extracted_userid'] = $data[0][$queryConfig['extract_userid_from']];
                 }
                 $winning_auth_query = $queryname;
-                $this->extractAttributes($attributes, $data, []);
+
+                $forbiddenAttributes = [];
+                if (array_key_exists('password_verify_hash_column', $queryConfig)) {
+                    $forbiddenAttributes[] = $queryConfig['password_verify_hash_column'];
+                }
+                $this->extractAttributes($attributes, $data, $forbiddenAttributes);
 
                 // The first auth query that succeeds is the winning one, so we can stop here.
                 break;
