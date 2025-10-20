@@ -28,6 +28,7 @@ class SQLTest extends TestCase
         "query" => null, // Filled out by each test case
     ];
 
+
     public static function setUpBeforeClass(): void
     {
         $pdo = new PDO('sqlite:file::memory:?cache=shared', null, null, [PDO::ATTR_PERSISTENT => true]);
@@ -79,6 +80,7 @@ class SQLTest extends TestCase
         }
     }
 
+
     public function testBasicSingleSuccess(): void
     {
         // Correct username/password
@@ -91,6 +93,7 @@ class SQLTest extends TestCase
             'givenName' => ["Bob"],
         ]);
     }
+
 
     public function testBasicSingleUsernameRegexSuccess(): void
     {
@@ -106,6 +109,7 @@ class SQLTest extends TestCase
         ]);
     }
 
+
     public function testBasicSingleUsernameRegexFailedLogin(): void
     {
         $this->expectException(\SimpleSAML\Error\Error::class);
@@ -116,6 +120,7 @@ class SQLTest extends TestCase
         asort($ret);
         $this->assertCount(0, $ret);
     }
+
 
     public function testBasicSingleUsernameRegexFailedLoginNonExistingUser(): void
     {
@@ -128,6 +133,7 @@ class SQLTest extends TestCase
         $this->assertCount(0, $ret);
     }
 
+
     public function testBasicSingleFailedLogin(): void
     {
         $this->expectException(\SimpleSAML\Error\Error::class);
@@ -136,6 +142,7 @@ class SQLTest extends TestCase
         $ret = (new $this->wrapperClassName($this->info, $this->config))->callLogin('alice', 'wrong');
         $this->assertCount(0, $ret);
     }
+
 
     public function testJoinSingleSuccess(): void
     {
@@ -155,6 +162,7 @@ class SQLTest extends TestCase
         ]);
     }
 
+
     public function testJoinSingleFailedLogin(): void
     {
         $this->expectException(\SimpleSAML\Error\Error::class);
@@ -166,6 +174,7 @@ class SQLTest extends TestCase
         $ret = (new $this->wrapperClassName($this->info, $this->config))->callLogin('alice', 'wrong');
         $this->assertCount(0, $ret);
     }
+
 
     public function testMultiQuerySuccess(): void
     {
@@ -185,6 +194,7 @@ class SQLTest extends TestCase
         ]);
     }
 
+
     public function testMultiQueryFailedLogin(): void
     {
         $this->expectException(\SimpleSAML\Error\Error::class);
@@ -196,6 +206,7 @@ class SQLTest extends TestCase
         $ret = (new $this->wrapperClassName($this->info, $this->config))->callLogin('alice', 'wrong');
         $this->assertCount(0, $ret);
     }
+
 
     public function testMultiQuerySubsequentNoRowsSuccess(): void
     {
@@ -215,6 +226,7 @@ class SQLTest extends TestCase
             'groupname' => ['students'],
         ]);
     }
+
 
     public function testMultiQuerySubsequentAppendSuccess(): void
     {

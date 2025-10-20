@@ -11,9 +11,9 @@ use PDO;
  * metadata spread across multiple databases, and passwords are hashed using password_hash(),
  * and verification done using password_verify(). Customers login with their email address,
  * but the common identifier across all databases is the userid (uid).
- * 
+ *
  * The attributes then come from multiple databases.
- * 
+ *
  * @covers \SimpleSAML\Module\core\Auth\Process\AttributeLimit
  */
 class SQL2PasswordVerifySingleAuthTest extends SQL2SingleAuthTest
@@ -25,8 +25,13 @@ class SQL2PasswordVerifySingleAuthTest extends SQL2SingleAuthTest
     // as password_verify() does not work that way.
     protected string $extraSqlAndClauses = '';
 
-    protected function getConfig(int $numDatabases, int $numAuthQueries, array $authQueryAttributes, int $numAttrQueries): array
-    {
+
+    protected function getConfig(
+        int $numDatabases,
+        int $numAuthQueries,
+        array $authQueryAttributes,
+        int $numAttrQueries,
+    ): array {
         $config = parent::getConfig($numDatabases, $numAuthQueries, $authQueryAttributes, $numAttrQueries);
 
         foreach ($config['auth_queries'] as &$query) {
@@ -35,6 +40,7 @@ class SQL2PasswordVerifySingleAuthTest extends SQL2SingleAuthTest
 
         return $config;
     }
+
 
     public static function setUpBeforeClass(): void
     {

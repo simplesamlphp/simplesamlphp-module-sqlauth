@@ -18,7 +18,7 @@ class SQL1Compat extends SQL2
      */
     public function __construct(array $info, array $config)
     {
-        /* Transform SQL (version 1) config to SQL2 config 
+        /* Transform SQL (version 1) config to SQL2 config
          * Version 1 supported only one database, but multiple queries. The first query was defined
          * to be the "authentication query", all subsequent queries were "attribute queries".
          */
@@ -29,14 +29,14 @@ class SQL1Compat extends SQL2
                     'dsn' => $config['dsn'],
                     'username' => $config['username'],
                     'password' => $config['password'],
-                ]
+                ],
             ],
 
             'auth_queries' => [
                 'default' => [
                     'database' => 'default',
                     'query' => is_array($config['query']) ? $config['query'][0] : $config['query'],
-                ]
+                ],
             ],
         ];
 

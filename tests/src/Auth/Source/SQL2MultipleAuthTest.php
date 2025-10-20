@@ -8,12 +8,12 @@ use PDO;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The scenario for this test case is two separate types of users (staff and students), 
+ * The scenario for this test case is two separate types of users (staff and students),
  * each of which has its own set of attributes in separate databases. In addition, the
- * physics department have their own legacy database of staff, which has some extra 
+ * physics department have their own legacy database of staff, which has some extra
  * attributes which are not in the main staff database, and their passwords are still
  * in that legacy database. But physics staff records exist in the new staff database too.
- * 
+ *
  * The technical scenario is that there is one student database, two staff databases,
  * which a subset of the staff are in only one database, whereas some staff are in both.
  * Attributes for students come from just the student database, whereas the staff attributes
@@ -25,10 +25,13 @@ use PHPUnit\Framework\TestCase;
 class SQL2MultipleAuthTest extends TestCase
 {
     private array $info = ['AuthId' => 'testAuthId'];
+
     protected array $config = []; // Filled out in setUp()
 
     protected string $extraSqlSelectColumns = '';
+
     protected string $extraSqlAndClauses = ' and password=:password';
+
 
     public function setUp(): void
     {
@@ -53,7 +56,9 @@ class SQL2MultipleAuthTest extends TestCase
             "auth_queries" => [
                 "auth_query_students" => [
                     "database" => "studentsdb",
-                    "query" => "select studentid, givenName, lastName, email, course, year " . $this->extraSqlSelectColumns . " from students where email=:username" . $this->extraSqlAndClauses,
+                    "query" =>
+                        "select studentid, givenName, lastName, email, course, year " . $this->extraSqlSelectColumns .
+                        " from students where email=:username" . $this->extraSqlAndClauses,
                     "username_regex" => '/^[a-zA-Z0-9._%+-]+@student\.example\.edu$/',
                     "extract_userid_from" => 'studentid',
                 ],
@@ -62,14 +67,23 @@ class SQL2MultipleAuthTest extends TestCase
                 // staff databases, they will be authenticated against the physics_staffdb one.
                 "auth_query_physics_staff" => [
                     "database" => "physics_staffdb",
-                    "query" => "select psid as uid, CASE WHEN typically_wears_matching_socks=true THEN 'true' ELSE 'false' END as \"typically_wears_matching_socks\" " . $this->extraSqlSelectColumns . " from staff where email=:username" . $this->extraSqlAndClauses,
+                    "query" =>
+                        "select psid as uid, " .
+                        "CASE WHEN typically_wears_matching_socks=true " .
+                            "THEN 'true' " .
+                            "ELSE 'false' " .
+                            "END as \"typically_wears_matching_socks\" " .
+                        $this->extraSqlSelectColumns .
+                        " from staff where email=:username" . $this->extraSqlAndClauses,
                     "username_regex" => '/^[a-zA-Z0-9._%+-]+@example\.edu$/',
                     "extract_userid_from" => 'uid',
                 ],
 
                 "auth_query_staff" => [
                     "database" => "staffdb",
-                    "query" => "select uid, givenName, lastName, email, department " . $this->extraSqlSelectColumns . " from staff where email=:username" . $this->extraSqlAndClauses,
+                    "query" =>
+                        "select uid, givenName, lastName, email, department " . $this->extraSqlSelectColumns .
+                        " from staff where email=:username" . $this->extraSqlAndClauses,
                     "username_regex" => '/^[a-zA-Z0-9._%+-]+@example\.edu$/',
                     "extract_userid_from" => 'uid',
                 ],
@@ -87,7 +101,9 @@ class SQL2MultipleAuthTest extends TestCase
                 ],
                 [
                     'database' => 'physics_staffdb',
-                    'query' => "select qualification from staff_qualifications where psid=:userid order by qualification desc",
+                    'query' =>
+                        "select qualification from staff_qualifications " .
+                        "where psid=:userid order by qualification desc",
                     'only_for_auth' => ['auth_query_physics_staff'],
                 ],
                 [
@@ -99,10 +115,16 @@ class SQL2MultipleAuthTest extends TestCase
         ];
     }
 
+
     public static function setUpBeforeClass(): void
     {
         // Students database
-        $studentsPdo = new PDO('sqlite:file:studentsdb?mode=memory&cache=shared', null, null, [PDO::ATTR_PERSISTENT => true]);
+        $studentsPdo = new PDO(
+            'sqlite:file:studentsdb?mode=memory&cache=shared',
+            null,
+            null,
+            [PDO::ATTR_PERSISTENT => true],
+        );
         $studentsPdo->exec("DROP TABLE IF EXISTS students");
         // Create tables
         $studentsPdo->exec("
@@ -189,7 +211,12 @@ class SQL2MultipleAuthTest extends TestCase
         }
 
         // Physics staff database
-        $physicsStaffPdo = new PDO('sqlite:file:physics_staffdb?mode=memory&cache=shared', null, null, [PDO::ATTR_PERSISTENT => true]);
+        $physicsStaffPdo = new PDO(
+            'sqlite:file:physics_staffdb?mode=memory&cache=shared',
+            null,
+            null,
+            [PDO::ATTR_PERSISTENT => true],
+        );
         $physicsStaffPdo->exec("DROP TABLE IF EXISTS staff");
         $physicsStaffPdo->exec("
             CREATE TABLE staff (
@@ -225,6 +252,7 @@ class SQL2MultipleAuthTest extends TestCase
         }
     }
 
+
     public function testStudentLoginSuccess(): void
     {
         // Correct username/password
@@ -243,6 +271,7 @@ class SQL2MultipleAuthTest extends TestCase
         ]);
     }
 
+
     public function testNonPhysicsStaffLoginSuccess(): void
     {
         // Correct username/password for non-physics staff
@@ -259,6 +288,7 @@ class SQL2MultipleAuthTest extends TestCase
             'department' => ['Mathematics'],
         ]);
     }
+
 
     public function testPhysicsStaffLoginSuccess(): void
     {

@@ -11,9 +11,9 @@ use PHPUnit\Framework\TestCase;
  * The scenario for this test case is a single database of customers who have their
  * metadata spread across multiple databases. Customers login with their email address,
  * but the common identifier across all databases is the userid (uid).
- * 
+ *
  * The attributes then come from multiple databases.
- * 
+ *
  * @covers \SimpleSAML\Module\core\Auth\Process\AttributeLimit
  */
 class SQL2SingleAuthTest extends TestCase
@@ -21,13 +21,19 @@ class SQL2SingleAuthTest extends TestCase
     private array $info = ['AuthId' => 'testAuthId'];
 
     protected string $extraSqlSelectColumns = '';
+
     protected string $extraSqlAndClauses = ' and password=:password';
+
 
     /* Different tests require different combinations of databases, auth queries and attr queries.
      * This function returns a config with the requested number of each.
      */
-    protected function getConfig(int $numDatabases, int $numAuthQueries, array $authQueryAttributes, int $numAttrQueries): array
-    {
+    protected function getConfig(
+        int $numDatabases,
+        int $numAuthQueries,
+        array $authQueryAttributes,
+        int $numAttrQueries,
+    ): array {
         $config = [
             "databases" => [
                 "authdb" => [
@@ -49,13 +55,17 @@ class SQL2SingleAuthTest extends TestCase
             "auth_queries" => [
                 "auth_query_id" => [
                     "database" => "authdb",
-                    "query" => "select uid, givenName, email " . $this->extraSqlSelectColumns . " from users where uid=:username" . $this->extraSqlAndClauses,
+                    "query" =>
+                        "select uid, givenName, email " . $this->extraSqlSelectColumns .
+                        " from users where uid=:username" . $this->extraSqlAndClauses,
                     "username_regex" => '/^\\d+$/',
                     "extract_userid_from" => 'uid',
                 ],
                 "auth_query_email" => [
                     "database" => "authdb",
-                    "query" => "select uid, givenName, email " . $this->extraSqlSelectColumns . " from users where email=:username" . $this->extraSqlAndClauses,
+                    "query" =>
+                        "select uid, givenName, email " . $this->extraSqlSelectColumns .
+                        " from users where email=:username" . $this->extraSqlAndClauses,
                     "username_regex" => '/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/',
                     "extract_userid_from" => 'uid',
                 ],
@@ -93,13 +103,16 @@ class SQL2SingleAuthTest extends TestCase
             // Then check all of the requested attributes are in each auth query.
             foreach ($authQueryAttributes as $attribute) {
                 if (!array_key_exists($attribute, $authQuery)) {
-                    throw new \InvalidArgumentException("Auth query attribute \"$attribute\" not found in auth query \"$authQueryName\"");
+                    throw new \InvalidArgumentException(
+                        "Auth query attribute \"$attribute\" not found in auth query \"$authQueryName\"",
+                    );
                 }
             }
         }
 
         return $ret;
     }
+
 
     public static function setUpBeforeClass(): void
     {
@@ -150,7 +163,12 @@ class SQL2SingleAuthTest extends TestCase
         }
 
         // Students database
-        $studentsPdo = new PDO('sqlite:file:studentsdb?mode=memory&cache=shared', null, null, [PDO::ATTR_PERSISTENT => true]);
+        $studentsPdo = new PDO(
+            'sqlite:file:studentsdb?mode=memory&cache=shared',
+            null,
+            null,
+            [PDO::ATTR_PERSISTENT => true],
+        );
         $studentsPdo->exec("DROP TABLE IF EXISTS students");
         $studentsPdo->exec("
             CREATE TABLE students (
@@ -189,6 +207,7 @@ class SQL2SingleAuthTest extends TestCase
         }
     }
 
+
     public function testSingleAuthQueryOnlySuccess(): void
     {
         $config = $this->getConfig(1, 1, ['database', 'query'], 0);
@@ -204,6 +223,7 @@ class SQL2SingleAuthTest extends TestCase
         ]);
     }
 
+
     public function testSingleAuthQueryOnlyPasswordFailure(): void
     {
         $this->expectException(\SimpleSAML\Error\Error::class);
@@ -214,6 +234,7 @@ class SQL2SingleAuthTest extends TestCase
         (new SQL2Wrapper($this->info, $config))->callLogin('2', 'wrongpassword');
     }
 
+
     public function testSingleAuthQueryOnlyUsernameFailure(): void
     {
         $this->expectException(\SimpleSAML\Error\Error::class);
@@ -223,6 +244,7 @@ class SQL2SingleAuthTest extends TestCase
         // Nonexistent username
         (new SQL2Wrapper($this->info, $config))->callLogin('201', 'password');
     }
+
 
     public function testSingleAuthQueryOnlySuccessWithRegex(): void
     {
@@ -239,6 +261,7 @@ class SQL2SingleAuthTest extends TestCase
         ]);
     }
 
+
     public function testSingleAuthQueryOnlyFailureDueToRegex(): void
     {
         $this->expectException(\SimpleSAML\Error\Error::class);
@@ -247,6 +270,7 @@ class SQL2SingleAuthTest extends TestCase
         // Correct username/password
         (new SQL2Wrapper($this->info, $config))->callLogin('bad-username', 'password');
     }
+
 
     public function testSingleAuthQuerySingleAttrQuerySuccess(): void
     {
@@ -265,6 +289,7 @@ class SQL2SingleAuthTest extends TestCase
             'role' => ['Developer'],
         ]);
     }
+
 
     public function testSingleAuthQuerySingleAttrQueryPasswordFailure(): void
     {
@@ -292,6 +317,7 @@ class SQL2SingleAuthTest extends TestCase
         ]);
     }
 
+
     public function testMultipleAuthQueryNoAttrQueryUsernameIsEmailSuccess(): void
     {
         $config = $this->getConfig(2, 2, ['database', 'query', 'username_regex'], 0);
@@ -307,6 +333,7 @@ class SQL2SingleAuthTest extends TestCase
         ]);
     }
 
+
     public function testMultipleAuthQueryNoAttrQueryUsernameIsEmailFailure(): void
     {
         $this->expectException(\SimpleSAML\Error\Error::class);
@@ -316,6 +343,7 @@ class SQL2SingleAuthTest extends TestCase
         // Correct username/password
         (new SQL2Wrapper($this->info, $config))->callLogin('nonexistent@example.com', 'password');
     }
+
 
     public function testMultipleAuthQuerySingleAttrQueryUsernameIsEmailSuccess(): void
     {
@@ -334,6 +362,7 @@ class SQL2SingleAuthTest extends TestCase
             'role' => ['Developer'],
         ]);
     }
+
 
     public function testMultipleAuthQueryStudentWithMultipleEnrolmentsSuccess(): void
     {
@@ -354,6 +383,7 @@ class SQL2SingleAuthTest extends TestCase
         ]);
     }
 
+
     public function testMultipleAuthQueryStudentWithNoEnrolmentsSuccess(): void
     {
         $config = $this->getConfig(3, 2, ['database', 'query', 'username_regex', 'extract_userid_from'], 3);
@@ -372,6 +402,7 @@ class SQL2SingleAuthTest extends TestCase
             // No units_enrolled, 'unit_code' is not set
         ]);
     }
+
 
     public function testMultipleAuthQueryStudentWithSingleEnrolmentSuccess(): void
     {

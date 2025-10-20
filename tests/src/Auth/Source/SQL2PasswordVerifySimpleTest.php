@@ -10,10 +10,10 @@ use PDO;
  * The scenario for this test case is a single database of customers who have their
  * metadata in a single database, and passwords are hashed using password_hash(),
  * and verification done using password_verify().
- * 
- * The tests are essentially the same tests as SQLTest, but using the SQLv2 
+ *
+ * The tests are essentially the same tests as SQLTest, but using the SQLv2
  * configuration and code, not the SQL1 code or SQL1Compat interface.
- * 
+ *
  * @covers \SimpleSAML\Module\core\Auth\Process\AttributeLimit
  */
 class SQL2PasswordVerifySimpleTest extends SQL2SimpleTest
@@ -25,6 +25,7 @@ class SQL2PasswordVerifySimpleTest extends SQL2SimpleTest
     // as password_verify() does not work that way.
     protected string $extraSqlAndClauses = '';
 
+
     public function setUp(): void
     {
         parent::setUp();
@@ -33,6 +34,7 @@ class SQL2PasswordVerifySimpleTest extends SQL2SimpleTest
             $query['password_verify_hash_column'] = 'password';
         }
     }
+
 
     public static function setUpBeforeClass(): void
     {

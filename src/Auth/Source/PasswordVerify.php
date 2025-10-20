@@ -50,6 +50,7 @@ class PasswordVerify extends SQL
      */
     protected string $passwordhashcolumn = 'passwordhash';
 
+
     /**
      * Constructor for this authentication source.
      *
@@ -65,7 +66,6 @@ class PasswordVerify extends SQL
             $this->passwordhashcolumn = $config['passwordhashcolumn'];
         }
     }
-
 
 
     /**

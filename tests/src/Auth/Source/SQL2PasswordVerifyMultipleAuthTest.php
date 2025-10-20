@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SimpleSAML\Test\Module\sqlauth\Auth\Source;
 
 use PDO;
-use PHPUnit\Framework\TestCase;
 
 /**
  * The scenario is SQL2MultipleAuthTest but with passwords hashed using password_hash()
@@ -21,6 +20,7 @@ class SQL2PasswordVerifyMultipleAuthTest extends SQL2MultipleAuthTest
     // as password_verify() does not work that way.
     protected string $extraSqlAndClauses = '';
 
+
     public function setUp(): void
     {
         parent::setUp();
@@ -30,21 +30,37 @@ class SQL2PasswordVerifyMultipleAuthTest extends SQL2MultipleAuthTest
         }
     }
 
+
     public static function setUpBeforeClass(): void
     {
         parent::setUpBeforeClass();
 
-        $studentsPdo = new PDO('sqlite:file:studentsdb?mode=memory&cache=shared', null, null, [PDO::ATTR_PERSISTENT => true]);
+        $studentsPdo = new PDO(
+            'sqlite:file:studentsdb?mode=memory&cache=shared',
+            null,
+            null,
+            [PDO::ATTR_PERSISTENT => true],
+        );
         $studentsPdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $studentsPdo->prepare("UPDATE students SET password=?")
                 ->execute([password_hash('password', PASSWORD_ARGON2ID)]);
 
-        $staffPdo = new PDO('sqlite:file:staffdb?mode=memory&cache=shared', null, null, [PDO::ATTR_PERSISTENT => true]);
+        $staffPdo = new PDO(
+            'sqlite:file:staffdb?mode=memory&cache=shared',
+            null,
+            null,
+            [PDO::ATTR_PERSISTENT => true],
+        );
         $staffPdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $staffPdo->prepare("UPDATE staff SET password=?")
             ->execute([password_hash('password', PASSWORD_ARGON2ID)]);
-        
-        $physicsStaffPdo = new PDO('sqlite:file:physics_staffdb?mode=memory&cache=shared', null, null, [PDO::ATTR_PERSISTENT => true]);
+
+        $physicsStaffPdo = new PDO(
+            'sqlite:file:physics_staffdb?mode=memory&cache=shared',
+            null,
+            null,
+            [PDO::ATTR_PERSISTENT => true],
+        );
         $physicsStaffPdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $physicsStaffPdo->prepare("UPDATE staff SET password=?")
             ->execute([password_hash('password', PASSWORD_ARGON2ID)]);
