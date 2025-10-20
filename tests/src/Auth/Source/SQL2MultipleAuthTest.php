@@ -24,6 +24,7 @@ use PHPUnit\Framework\TestCase;
  */
 class SQL2MultipleAuthTest extends TestCase
 {
+    /** @var array<string, string> */
     private array $info = ['AuthId' => 'testAuthId'];
 
     protected array $config = []; // Filled out in setUp()
@@ -108,7 +109,7 @@ class SQL2MultipleAuthTest extends TestCase
                 ],
                 [
                     'database' => 'studentsdb',
-                    'query' => "select unit_code from units_enrolled where studentid=:userid",
+                    'query' => "select unit_code from units_enrolled where studentid=:userid order by unit_code",
                     'only_for_auth' => ['auth_query_students'],
                 ],
             ],
@@ -259,7 +260,6 @@ class SQL2MultipleAuthTest extends TestCase
         $ret = (new SQL2Wrapper($this->info, $this->config))->callLogin('alice.gibson@student.example.edu', 'password');
         asort($ret);
         $this->assertCount(7, $ret);
-        $this->assertCount(2, $ret['unit_code']);
         $this->assertEquals($ret, [
             'studentid' => ['1'],
             'givenName' => ["Alice"],
@@ -278,7 +278,6 @@ class SQL2MultipleAuthTest extends TestCase
         $ret = (new SQL2Wrapper($this->info, $this->config))->callLogin('eve.evans@example.edu', 'password');
         asort($ret);
         $this->assertCount(6, $ret);
-        $this->assertCount(1, $ret['role']);
         $this->assertEquals($ret, [
             'uid' => ['1'],
             'givenName' => ["Eve"],
@@ -296,7 +295,6 @@ class SQL2MultipleAuthTest extends TestCase
         $ret = (new SQL2Wrapper($this->info, $this->config))->callLogin('mallory.mallory@example.edu', 'password');
         asort($ret);
         $this->assertCount(8, $ret);
-        $this->assertCount(1, $ret['role']);
         $this->assertEquals($ret, [
             'uid' => ['2'],
             'givenName' => ["Mallory"],

@@ -26,6 +26,16 @@ class SQL2PasswordVerifySingleAuthTest extends SQL2SingleAuthTest
     protected string $extraSqlAndClauses = '';
 
 
+    /**
+     * Different tests require different combinations of databases, auth queries and attr queries.
+     * This function returns a config with the requested number of each.
+     *
+     * @param int $numDatabases
+     * @param int $numAuthQueries
+     * @param array<string> $authQueryAttributes
+     * @param int $numAttrQueries
+     * @return array<string, mixed>
+     */
     protected function getConfig(
         int $numDatabases,
         int $numAuthQueries,
@@ -34,8 +44,10 @@ class SQL2PasswordVerifySingleAuthTest extends SQL2SingleAuthTest
     ): array {
         $config = parent::getConfig($numDatabases, $numAuthQueries, $authQueryAttributes, $numAttrQueries);
 
-        foreach ($config['auth_queries'] as &$query) {
-            $query['password_verify_hash_column'] = 'password';
+        // @phpstan-ignore argument.type
+        foreach (array_keys($config['auth_queries']) as $authQueryName) {
+            // @phpstan-ignore offsetAccess.nonOffsetAccessible
+            $config['auth_queries'][$authQueryName]['password_verify_hash_column'] = 'password';
         }
 
         return $config;

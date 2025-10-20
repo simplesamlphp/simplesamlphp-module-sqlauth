@@ -16,13 +16,14 @@ use PHPUnit\Framework\TestCase;
  */
 class SQL2SimpleTest extends TestCase
 {
+    /** @var array<string, string> */
     private array $info = ['AuthId' => 'testAuthId'];
 
     protected array $config = []; // Filled out in setUp()
 
     protected string $extraSqlSelectColumns = '';
 
-    protected string $extraSqlAndClauses = ' and password=:password';
+    protected string $extraSqlAndClauses = ' and password=:password ';
 
 
     public function setUp(): void
@@ -193,10 +194,10 @@ class SQL2SimpleTest extends TestCase
         $this->config['auth_queries']['auth_query']['query'] = "
             select u.givenName, u.email, ug.groupname" . $this->extraSqlSelectColumns . " 
             from users u left join usergroups ug on (u.uid=ug.uid)
-            where u.uid=:username" . $this->extraSqlAndClauses;
+            where u.uid=:username" . $this->extraSqlAndClauses .
+            "order by ug.groupname";
         $ret = (new SQL2Wrapper($this->info, $this->config))->callLogin('bob', 'password');
         asort($ret);
-        asort($ret['groupname']);
         $this->assertCount(3, $ret);
         $this->assertEquals($ret, [
             'email' => ['bob@example.com'],
@@ -228,13 +229,14 @@ class SQL2SimpleTest extends TestCase
         $this->config['attr_queries'] = [
             [
                 'database' => 'defaultdb',
-                'query' => "select groupname from usergroups where uid=:username",
+                'query' =>
+                    "select groupname from usergroups where uid=:username " .
+                    "order by groupname",
             ],
         ];
 
         $ret = (new SQL2Wrapper($this->info, $this->config))->callLogin('bob', 'password');
         asort($ret);
-        asort($ret['groupname']);
         $this->assertCount(3, $ret);
         $this->assertEquals($ret, [
             'email' => ['bob@example.com'],
@@ -271,17 +273,22 @@ class SQL2SimpleTest extends TestCase
         $this->config['attr_queries'] = [
             [
                 'database' => 'defaultdb',
-                'query' => "select groupname from usergroups where uid=:username and groupname like '%nomatch%'",
+                'query' =>
+                    "select groupname from usergroups " .
+                    "where uid=:username and groupname like '%nomatch%' " .
+                    "order by groupname",
             ],
             [
                 'database' => 'defaultdb',
-                'query' => "select groupname from usergroups where uid=:username and groupname like 'stud%'",
+                'query' =>
+                    "select groupname from usergroups " .
+                    "where uid=:username and groupname like 'stud%' " .
+                    "order by groupname",
             ],
         ];
 
         $ret = (new SQL2Wrapper($this->info, $this->config))->callLogin('bob', 'password');
         asort($ret);
-        asort($ret['groupname']);
         $this->assertCount(3, $ret);
         $this->assertEquals($ret, [
             'email' => ['bob@example.com'],
@@ -300,16 +307,21 @@ class SQL2SimpleTest extends TestCase
         $this->config['attr_queries'] = [
             [
                 'database' => 'defaultdb',
-                'query' => "select groupname from usergroups where uid=:username and groupname like 'stud%'",
+                'query' =>
+                    "select groupname from usergroups " .
+                    "where uid=:username and groupname like 'stud%'" .
+                    " order by groupname",
             ],
             [
                 'database' => 'defaultdb',
-                'query' => "select groupname from usergroups where uid=:username and groupname like '%sers'",
+                'query' =>
+                    "select groupname from usergroups " .
+                    "where uid=:username and groupname like '%sers' " .
+                    "order by groupname",
             ],
         ];
         $ret = (new SQL2Wrapper($this->info, $this->config))->callLogin('bob', 'password');
         asort($ret);
-        asort($ret['groupname']);
         $this->assertCount(3, $ret);
         $this->assertEquals($ret, [
             'email' => ['bob@example.com'],

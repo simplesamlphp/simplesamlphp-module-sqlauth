@@ -18,6 +18,7 @@ use PHPUnit\Framework\TestCase;
  */
 class SQL2SingleAuthTest extends TestCase
 {
+    /** @var array<string, string> */
     private array $info = ['AuthId' => 'testAuthId'];
 
     protected string $extraSqlSelectColumns = '';
@@ -25,8 +26,15 @@ class SQL2SingleAuthTest extends TestCase
     protected string $extraSqlAndClauses = ' and password=:password';
 
 
-    /* Different tests require different combinations of databases, auth queries and attr queries.
+    /**
+     * Different tests require different combinations of databases, auth queries and attr queries.
      * This function returns a config with the requested number of each.
+     *
+     * @param int $numDatabases
+     * @param int $numAuthQueries
+     * @param array<string> $authQueryAttributes
+     * @param int $numAttrQueries
+     * @return array<string, mixed>
      */
     protected function getConfig(
         int $numDatabases,
@@ -372,7 +380,6 @@ class SQL2SingleAuthTest extends TestCase
         $ret = (new SQL2Wrapper($this->info, $config))->callLogin('3', 'password');
         asort($ret);
         $this->assertCount(6, $ret);
-        $this->assertCount(2, $ret['unit_code']);
         $this->assertEquals($ret, [
             'uid' => ['3'],
             'email' => ['trudy@example.com'],
@@ -412,7 +419,6 @@ class SQL2SingleAuthTest extends TestCase
         $ret = (new SQL2Wrapper($this->info, $config))->callLogin('5', 'password');
         asort($ret);
         $this->assertCount(6, $ret);
-        $this->assertCount(1, $ret['unit_code']);
         $this->assertEquals($ret, [
             'uid' => ['5'],
             'email' => ['mallory@example.com'],

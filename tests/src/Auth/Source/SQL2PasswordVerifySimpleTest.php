@@ -23,7 +23,7 @@ class SQL2PasswordVerifySimpleTest extends SQL2SimpleTest
 
     // We need to not specify the 'password=:password' clause in the WHERE clause,
     // as password_verify() does not work that way.
-    protected string $extraSqlAndClauses = '';
+    protected string $extraSqlAndClauses = ' ';
 
 
     public function setUp(): void
