@@ -482,7 +482,7 @@ class SQL2 extends UserPassBase
                         }
                     }
 
-                    if (($passwordHash === null) || (!password_verify($password, $passwordHash))) {
+                    if ($passwordHash == null || (!password_verify($password, $passwordHash))) {
                         Logger::error('sqlauth:' . $this->authId . ': Auth query ' . $queryname .
                                      ' password verification failed');
                         /* Authentication with verify_password() failed, however that only means that
