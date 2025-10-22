@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SimpleSAML\Module\sqlauth\Auth\Source;
 
+use SimpleSAML\Assert\Assert;
 use SimpleSAML\Error;
 use SimpleSAML\Logger;
 use SimpleSAML\Module\sqlauth\Auth\Source\SQL;
@@ -142,16 +143,7 @@ class PasswordVerify extends SQL
                  * This should never happen as the count(data) test above would have already thrown.
                  * But checking twice doesn't hurt.
                  */
-                if ($pwhash === null) {
-                    if ($pwhash != $row[$this->passwordhashcolumn]) {
-                        Logger::error(sprintf(
-                            'sqlauth:%s: column `%s` does not contain a password hash.',
-                            $this->authId,
-                            $this->passwordhashcolumn,
-                        ));
-                        throw new Error\Error('WRONGUSERPASS');
-                    }
-                }
+                Assert::notNull($pwhash);
 
                 /**
                  * VERIFICATION!

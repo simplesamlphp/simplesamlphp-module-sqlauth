@@ -1,13 +1,27 @@
 parameters:
 	ignoreErrors:
 		-
-			message: "#Call to an undefined method object::callLogin().#"
-			count: 10
+			message: '#^Parameter \#1 \$array of function asort expects array, string given\.$#'
+			identifier: argument.type
+			count: 4
 			path: tests/src/Auth/Source/PasswordVerifyTest.php
 
 		-
-			message: "#Call to an undefined method object::callLogin().#"
-			count: 11
+			message: '#^Property SimpleSAML\\Test\\Module\\sqlauth\\Auth\\Source\\PasswordVerifyTest\:\:\$config \(array\<string, string\|null\>\) does not accept array\<string, list\<string\>\|string\|null\>\.$#'
+			identifier: assign.propertyType
+			count: 4
+			path: tests/src/Auth/Source/PasswordVerifyTest.php
+
+		-
+			message: '#^Parameter \#1 \$array of function asort expects array, mixed given\.$#'
+			identifier: argument.type
+			count: 4
+			path: tests/src/Auth/Source/SQLTest.php
+
+		-
+			message: '#^Property SimpleSAML\\Test\\Module\\sqlauth\\Auth\\Source\\SQLTest\:\:\$config \(array\<string, string\|null\>\) does not accept array\<string, list\<string\>\|string\|null\>\.$#'
+			identifier: assign.propertyType
+			count: 4
 			path: tests/src/Auth/Source/SQLTest.php
 
 		-
