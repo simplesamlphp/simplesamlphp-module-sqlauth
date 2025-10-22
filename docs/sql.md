@@ -43,7 +43,7 @@ As a worked example, consider the following example table useful for authenticat
 
 | uid | password | salt | givenName | email             |
 |-----|----------|------|-----------|-------------------|
-| bob | ******** | **** | Bob       | "bob@example.com" |
+| bob | ******** | **** | Bob       | <bob@example.com> |
 
 and another table (potentially in a completely separate database) which has attributes we want to return:
 
