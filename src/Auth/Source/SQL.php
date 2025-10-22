@@ -70,6 +70,7 @@ class SQL extends UserPassBase
      */
     protected array $query;
 
+
     /**
      * Constructor for this authentication source.
      *
@@ -155,6 +156,7 @@ class SQL extends UserPassBase
         return $db;
     }
 
+
     /**
      * Extract SQL columns into SAML attribute array
      *
@@ -191,6 +193,7 @@ class SQL extends UserPassBase
         return $attributes;
     }
 
+
     /**
      * Execute the query with given parameters and return the tuples that result.
      *
@@ -223,6 +226,7 @@ class SQL extends UserPassBase
         }
     }
 
+
     /**
      * If there is a username_regex then verify the passed username against it and
      * throw an exception if it fails.
@@ -239,6 +243,7 @@ class SQL extends UserPassBase
             }
         }
     }
+
 
     /**
      * Attempt to log in using the given username and password.

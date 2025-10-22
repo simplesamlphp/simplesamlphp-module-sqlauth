@@ -25,6 +25,7 @@ class PasswordVerifyTest extends TestCase
         "query" => null, // Filled out by each test case
     ];
 
+
     public static function setUpBeforeClass(): void
     {
         $pdo = new PDO('sqlite:file::memory:?cache=shared', null, null, [PDO::ATTR_PERSISTENT => true]);
@@ -79,6 +80,7 @@ class PasswordVerifyTest extends TestCase
         }
     }
 
+
     public function testBasicSingleSuccess(): void
     {
         // Correct username/password
@@ -101,6 +103,7 @@ class PasswordVerifyTest extends TestCase
         $ret = (new PasswordVerifyWrapper($this->info, $this->config))->callLogin('alice', 'wrong');
         $this->assertCount(0, $ret);
     }
+
 
     public function testBasicSingleFailedLoginNonExisting(): void
     {
@@ -140,6 +143,7 @@ class PasswordVerifyTest extends TestCase
         ]);
     }
 
+
     public function testJoinSingleFailedLogin(): void
     {
         $this->expectException(\SimpleSAML\Error\Error::class);
@@ -151,6 +155,7 @@ class PasswordVerifyTest extends TestCase
         $ret = (new PasswordVerifyWrapper($this->info, $this->config))->callLogin('alice', 'wrong');
         $this->assertCount(0, $ret);
     }
+
 
     public function testMultiQuerySuccess(): void
     {
@@ -169,6 +174,7 @@ class PasswordVerifyTest extends TestCase
             'groupname' => ['students', 'users'],
         ]);
     }
+
 
     public function testMultiQueryFailedLogin(): void
     {
@@ -201,6 +207,7 @@ class PasswordVerifyTest extends TestCase
             'groupname' => ['students'],
         ]);
     }
+
 
     public function testMultiQuerySubsequentAppendSuccess(): void
     {
