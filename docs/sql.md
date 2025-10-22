@@ -37,7 +37,7 @@ The basic concepts of how `sqlauth` works is common between versions 1 and 2.
 : Optional SQL queries executed after the authentication queries are executed. The resulting rows returned represent SAML attributes to be returned. If no rows are returned, this is not an error condition - it just doesn't add any extra SAML attributes to be returned.
 
 - Authentication queries. If this returns zero rows, authentication fails. If it returns more than one row, authentication is deemed to succeed. the parameters `:username` and `:password` are available and should be evaluated by the query for authentication purposes. Each column returned becomes an attribute.The rows returned represent attributes to be returned.
-- Zero or more Attribute queries. All columns returned become attributes. Duplicates are supressed. Arrays with multiple values come from multiple rows being returned.The rows returned represent attributes to be returned.
+- Zero or more Attribute queries. All columns returned become attributes. Duplicates are suppressed. Arrays with multiple values come from multiple rows being returned.The rows returned represent attributes to be returned.
 
 As a worked example, consider the following example table useful for authentication:
 
@@ -64,7 +64,7 @@ And we could use an attribute query like:
 select groupName from usergroups where uid=:username
 ```
 
-Note: Depending upon configuration, attibute queries using the Version 2 configuration format may use `:username` or `:userid`. See the Version 2 section below for more details.
+Note: Depending upon configuration, attribute queries using the Version 2 configuration format may use `:username` or `:userid`. See the Version 2 section below for more details.
 
 In summary:
 
@@ -163,7 +163,7 @@ Assuming the correct `:username` and `:password` are passed, the resulting SAML 
 | email          | [ bob@example.com ] |
 | groupName      | [ users, staff ]    |
 
-In the below example, we have users in two separate databases and two authentication queries. Authentication queries are run in the order they are configured, and once an authentication query successfully authenticates a user it is deemed to be authenticated using that query, and no further authentication queries are run. In the below case, the username formats are defined (single lower case word for staff, suppliers have a "supp_" prefix), and as a result we can use the optional `username_regex` parameter to get a slight performance boost out of not running unneccessary queries.
+In the below example, we have users in two separate databases and two authentication queries. Authentication queries are run in the order they are configured, and once an authentication query successfully authenticates a user it is deemed to be authenticated using that query, and no further authentication queries are run. In the below case, the username formats are defined (single lower case word for staff, suppliers have a "supp_" prefix), and as a result we can use the optional `username_regex` parameter to get a slight performance boost out of not running unnecessary queries.
 
 ```php
 $config = [
@@ -203,7 +203,7 @@ $config = [
 ];
 ```
 
-An example staff login with the above configuration might result in SAML attribues like:
+An example staff login with the above configuration might result in SAML attributes like:
 
 | Attribute Name | Attribute Value       |
 |----------------|-----------------------|
