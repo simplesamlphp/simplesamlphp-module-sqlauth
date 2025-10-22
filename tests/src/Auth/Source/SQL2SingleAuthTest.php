@@ -13,9 +13,8 @@ use PHPUnit\Framework\TestCase;
  * but the common identifier across all databases is the userid (uid).
  *
  * The attributes then come from multiple databases.
- *
- * @covers \SimpleSAML\Module\core\Auth\Process\AttributeLimit
  */
+#CoversClass(SimpleSAML\Module\sqlauth\Auth\Source\SQL2::class)
 class SQL2SingleAuthTest extends TestCase
 {
     /** @var array<string, string> */

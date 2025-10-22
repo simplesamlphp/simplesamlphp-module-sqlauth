@@ -13,9 +13,8 @@ use PDO;
  * but the common identifier across all databases is the userid (uid).
  *
  * The attributes then come from multiple databases.
- *
- * @covers \SimpleSAML\Module\core\Auth\Process\AttributeLimit
  */
+#CoversClass(SimpleSAML\Module\sqlauth\Auth\Source\SQL2::class)
 class SQL2PasswordVerifySingleAuthTest extends SQL2SingleAuthTest
 {
     // We need to return password column for password_verify() to use.

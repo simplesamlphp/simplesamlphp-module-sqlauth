@@ -7,11 +7,7 @@ namespace SimpleSAML\Test\Module\sqlauth\Auth\Source;
 use PDO;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Test for the core:AttributeLimit filter.
- *
- * @covers \SimpleSAML\Module\core\Auth\Process\AttributeLimit
- */
+#CoversClass(\SimpleSAML\Module\sqlauth\Auth\Source\PasswordVerify::class)
 class PasswordVerifyTest extends TestCase
 {
     // Subclasses can override this to test other wrapper classes

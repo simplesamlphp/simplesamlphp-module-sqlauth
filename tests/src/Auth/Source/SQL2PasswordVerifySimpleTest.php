@@ -13,9 +13,8 @@ use PDO;
  *
  * The tests are essentially the same tests as SQLTest, but using the SQLv2
  * configuration and code, not the SQL1 code or SQL1Compat interface.
- *
- * @covers \SimpleSAML\Module\core\Auth\Process\AttributeLimit
  */
+#CoversClass(SimpleSAML\Module\sqlauth\Auth\Source\SQL2::class)
 class SQL2PasswordVerifySimpleTest extends SQL2SimpleTest
 {
     // We need to return password column for password_verify() to use.

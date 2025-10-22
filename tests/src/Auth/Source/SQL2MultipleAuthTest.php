@@ -19,9 +19,8 @@ use PHPUnit\Framework\TestCase;
  * Attributes for students come from just the student database, whereas the staff attributes
  * come from both staff databases if the user is in both, and only the main staff database
  * if they are not in the physics department.
- *
- * @covers \SimpleSAML\Module\core\Auth\Process\AttributeLimit
  */
+#CoversClass(SimpleSAML\Module\sqlauth\Auth\Source\SQL2::class)
 class SQL2MultipleAuthTest extends TestCase
 {
     /** @var array<string, string> */

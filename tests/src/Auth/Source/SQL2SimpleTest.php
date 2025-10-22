@@ -11,9 +11,8 @@ use PHPUnit\Framework\TestCase;
  * The scenario for this test case is a single database of customers who have their
  * metadata in a single database. This is essentially the same tests as SQLTest, but
  * using the SQLv2 configuration and code, not the SQL1 code or SQL1Compat interface.
- *
- * @covers \SimpleSAML\Module\core\Auth\Process\AttributeLimit
  */
+#CoversClass(SimpleSAML\Module\sqlauth\Auth\Source\SQL2::class)
 class SQL2SimpleTest extends TestCase
 {
     /** @var array<string, string> */

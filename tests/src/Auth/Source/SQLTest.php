@@ -9,9 +9,8 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Test for the core:AttributeLimit filter.
- *
- * @covers \SimpleSAML\Module\core\Auth\Process\AttributeLimit
  */
+#CoversClass(SimpleSAML\Module\sqlauth\Auth\Source\SQL::class)
 class SQLTest extends TestCase
 {
     // Subclasses can override this to test other wrapper classes

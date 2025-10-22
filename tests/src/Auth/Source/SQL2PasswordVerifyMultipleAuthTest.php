@@ -8,9 +8,8 @@ use PDO;
 
 /**
  * The scenario is SQL2MultipleAuthTest but with passwords hashed using password_hash()
- *
- * @covers \SimpleSAML\Module\core\Auth\Process\AttributeLimit
  */
+#CoversClass(SimpleSAML\Module\sqlauth\Auth\Source\SQL2::class)
 class SQL2PasswordVerifyMultipleAuthTest extends SQL2MultipleAuthTest
 {
     // We need to return password column for password_verify() to use.
