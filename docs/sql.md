@@ -1,21 +1,23 @@
 # `sqlauth:SQL`
 
-
 These are authentication modules for authenticating a user against and retrieving attributes from an SQL database.
 
 The authentication can be done in one of two ways:
+
 - Most commonly, as a part of the SQL query itself (ie. using SQL functions to hash a parameterized password and compare that to a value stored in the database).
 - Less commonly, just store the hash in the database, retrieve that then compare that hash using PHP's `password_verify()` function to authenticate. This is useful in cases where there is minimal support in the database or to allow the same code to work against many databases without modification. The differences in how this is configured are in a section towards the bottom of this file.
 
 There are two different configuration formats supported ("version 1" and "version 2"). Version 1 is simpler, but is more limited in functionality. Version 2 is more powerful and configurable, but a little more verbose. If you wish to authenticate or gather attributes from more than one SQL database, or need more than one SQL query for authentication then you definitely need Version 2.
 
 The Version 1 configuration support comes in two flavours (but identical configurations):
+
 - `sqlauth:SQL` uses the legacy Version 1 configuration format and code. Eventually the old code will be phased out, and `sqlauth:SQL` will become a synonym for `sqlauth:SQL1Compat`.
 - `sqlauth:SQL1Compat` uses the legacy Version 1 configuration, but applies it to the Version 2 code.
 
 If you are starting out we recommend the Version 2 (`sqlauth:SQL2`) configuration format.
 
 You enable the module in `config/config.php`.
+
 ```php
     'module.enable' => [
         [...]
@@ -39,9 +41,9 @@ The basic concepts of how `sqlauth` works is common between versions 1 and 2.
 
 As a worked example, consider the following example table useful for authentication:
 
-| uid | password | salt | givenName | email           |
-|-----|----------|------|-----------|-----------------|
-| bob | ******** | **** | Bob       | bob@example.com |
+| uid | password | salt | givenName | email             |
+|-----|----------|------|-----------|-------------------|
+| bob | ******** | **** | Bob       | "bob@example.com" |
 
 and another table (potentially in a completely separate database) which has attributes we want to return:
 
@@ -75,10 +77,10 @@ In summary:
 - If multiple queries return the same column names, they will also be merged into the same attributes.
 - Duplicate values and NULL values will be removed.
 
-
 ## Version 2 Configuration Format
 
 The Version 2 configuration format supports:
+
 - One or more database connections.
 - One or more authentication queries using any database defined in the `databases` section.
 - Zero or more attribute queries. Each query can use any database defined in the database section, and can be restricted to apply only to one or more authentication queries.
@@ -112,12 +114,11 @@ $config = [
 
 Assuming the correct `:username` and `:password` are passed, the resulting SAML attributes returned by this configuration would be:
 
-| Attribute Name | Attribute Value |
-|----------------|-----------------|
-| uid            | [ bob ]         |
-| givenName      | [ Bob ]         |
+| Attribute Name | Attribute Value     |
+|----------------|---------------------|
+| uid            | [ bob ]             |
+| givenName      | [ Bob ]             |
 | email          | [ bob@example.com ] |
-
 
 It's really easy to add extra attributes by adding one or more attribute queries:
 
@@ -155,13 +156,12 @@ $config = [
 
 Assuming the correct `:username` and `:password` are passed, the resulting SAML attributes returned by this configuration would be:
 
-| Attribute Name | Attribute Value |
-|----------------|-----------------|
-| uid            | [ bob ]         |
-| givenName      | [ Bob ]         |
+| Attribute Name | Attribute Value     |
+|----------------|---------------------|
+| uid            | [ bob ]             |
+| givenName      | [ Bob ]             |
 | email          | [ bob@example.com ] |
-| groupName      | [ users, staff ] |
-
+| groupName      | [ users, staff ]    |
 
 In the below example, we have users in two separate databases and two authentication queries. Authentication queries are run in the order they are configured, and once an authentication query successfully authenticates a user it is deemed to be authenticated using that query, and no further authentication queries are run. In the below case, the username formats are defined (single lower case word for staff, suppliers have a "supp_" prefix), and as a result we can use the optional `username_regex` parameter to get a slight performance boost out of not running unneccessary queries.
 
@@ -210,7 +210,6 @@ An example staff login with the above configuration might result in SAML attribu
 | uid            | [ brian ]             |
 | givenName      | [ Brian ]             |
 | email          | [ brian@example.com ] |
-
 
 The next example shows a case where we have a single database we are authenticating against, but are aggregating attributes from a number of different databases. In such cases it is common that users might login with an email address, however the shared User ID between databases is some other ID. To support this, the `extract_userid` takes the value from this other ID field in the authentication query and makes it available as `:userid` in the attribute queries instead of `:username`.
 
@@ -280,7 +279,6 @@ and a student might look like:
 | email          | [ jane@student.example.edu ] |
 | course         | [ Mathematics ]              |
 | year           | [ 2 ]                        |
-
 
 When you've got more than one authentication query, it is possible to restrict attribute queries to only run for certain authentication queries using the `only_for_auth` attribute query configuration parameter:
 
@@ -360,9 +358,7 @@ and a student might look like:
 | year           | [ 2 ]                        |
 | unit_code      | [ MATH201, MATH202, MATH203] |
 
-
-
-### Configuration Parameter Dictionary
+### Configuration Parameter Dictionary (Version 2)
 
 There are three sections in the configuration, as follows:
 
@@ -385,6 +381,7 @@ $this->config = [
 ```
 
 #### databases
+
 `dsn`
 :   The DSN which should be used to connect to the database server.
     Check the various database drivers in the [PHP documentation](http://php.net/manual/en/pdo.drivers.php) for a description of the various DSN formats.
@@ -394,7 +391,6 @@ $this->config = [
 
 `password`
 :   The password which should be used when connecting to the database server.
-
 
 #### auth_queries
 
@@ -424,10 +420,10 @@ $this->config = [
 `only_for_auth`
 :   (Optional) Only run the attribute query if the user authenticated using one of the authentication queries referenced in this list.
 
-
 ## Version 1 Configuration Format
 
 The Version 1 format is more basic, both in terms of configuration and different use cases it supports. Specifically, it supports:
+
 - One database only
 - One authentication query
 - Zero or more attribute queries
@@ -522,8 +518,7 @@ In summary:
 - If multiple queries return the same column names, they will also be merged into the same attributes.
 - Duplicate values and NULL values will be removed.
 
-
-### Configuration Parameter Dictionary
+### Configuration Parameter Dictionary (Version 1)
 
 `dsn`
 :   The DSN which should be used to connect to the database server.
