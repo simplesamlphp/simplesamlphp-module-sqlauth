@@ -7,5 +7,12 @@ namespace SimpleSAML\Test\Module\sqlauth\Auth\Source;
 #CoversClass(SimpleSAML\Module\sqlauth\Auth\Source\SQL1Compat::class)
 class SQL1CompatTest extends SQLTest
 {
-    protected string $wrapperClassName = '\SimpleSAML\Test\Module\sqlauth\Auth\Source\SQL1CompatWrapper';
+    /**
+     * @param array<mixed> $info
+     * @param array<mixed> $config
+     */
+    protected function createWrapper(array $info, array $config): WrapperInterface
+    {
+        return new SQL1CompatWrapper($info, $config);
+    }
 }

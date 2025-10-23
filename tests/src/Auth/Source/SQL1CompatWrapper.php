@@ -13,7 +13,7 @@ use SimpleSAML\Module\sqlauth\Auth\Source\SQL1Compat;
  * method in SQL.php
  */
 
-class SQL1CompatWrapper extends SQL1Compat
+class SQL1CompatWrapper extends SQL1Compat implements WrapperInterface
 {
     /**
      * @param array<mixed> $info

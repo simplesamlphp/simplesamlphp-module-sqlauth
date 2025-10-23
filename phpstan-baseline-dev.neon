@@ -1,35 +1,13 @@
 parameters:
 	ignoreErrors:
 		-
-			message: '#^Parameter \#1 \$array of function asort expects array, string given\.$#'
-			identifier: argument.type
-			count: 4
-			path: tests/src/Auth/Source/PasswordVerifyTest.php
-
-		-
-			message: '#^Property SimpleSAML\\Test\\Module\\sqlauth\\Auth\\Source\\PasswordVerifyTest\:\:\$config \(array\<string, string\|null\>\) does not accept array\<string, list\<string\>\|string\|null\>\.$#'
-			identifier: assign.propertyType
-			count: 4
-			path: tests/src/Auth/Source/PasswordVerifyTest.php
-
-		-
-			message: '#^Parameter \#1 \$array of function asort expects array, mixed given\.$#'
-			identifier: argument.type
-			count: 4
-			path: tests/src/Auth/Source/SQLTest.php
-
-		-
-			message: '#^Property SimpleSAML\\Test\\Module\\sqlauth\\Auth\\Source\\SQLTest\:\:\$config \(array\<string, string\|null\>\) does not accept array\<string, list\<string\>\|string\|null\>\.$#'
-			identifier: assign.propertyType
-			count: 4
-			path: tests/src/Auth/Source/SQLTest.php
-
-		-
-			message: "#Property SimpleSAML\\\\Test\\\\Module\\\\sqlauth\\\\Auth\\\\Source\\\\SQL2SimpleTest\\:\\:\\$config type has no value type specified in iterable type array\\.#"
-			count: 1
-			path: tests/src/Auth/Source/SQL2SimpleTest.php
-
-		-
-			message: "#Property SimpleSAML\\\\Test\\\\Module\\\\sqlauth\\\\Auth\\\\Source\\\\SQL2MultipleAuthTest\\:\\:\\$config type has no value type specified in iterable type array\\.#"
+			message: '#^Property SimpleSAML\\Test\\Module\\sqlauth\\Auth\\Source\\SQL2MultipleAuthTest\:\:\$config type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
 			count: 1
 			path: tests/src/Auth/Source/SQL2MultipleAuthTest.php
+
+		-
+			message: '#^Property SimpleSAML\\Test\\Module\\sqlauth\\Auth\\Source\\SQL2SimpleTest\:\:\$config type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/src/Auth/Source/SQL2SimpleTest.php
