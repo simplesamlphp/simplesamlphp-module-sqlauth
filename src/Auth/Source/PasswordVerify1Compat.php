@@ -50,9 +50,10 @@ class PasswordVerify1Compat extends SQL2
             $v2config['auth_queries']['default']['password_verify_hash_column'] = $config['passwordhash_column'];
         }
 
-        if (is_array($config['query']) && count($config['query']) > 1) {
+        $numQueries = is_array($config['query']) ? count($config['query']) : 0;
+        if ($numQueries > 1) {
             $v2config['attr_queries'] = [];
-            for ($i = 1; $i < count($config['query']); $i++) {
+            for ($i = 1; $i < $numQueries; $i++) {
                 $v2config['attr_queries']['query' . $i] = [
                     'database' => 'default',
                     'query' => $config['query'][$i],

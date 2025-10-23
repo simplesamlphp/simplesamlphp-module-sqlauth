@@ -44,9 +44,10 @@ class SQL1Compat extends SQL2
             $v2config['auth_queries']['default']['username_regex'] = $config['username_regex'];
         }
 
-        if (is_array($config['query']) && count($config['query']) > 1) {
+        $numQueries = is_array($config['query']) ? count($config['query']) : 0;
+        if ($numQueries > 1) {
             $v2config['attr_queries'] = [];
-            for ($i = 1; $i < count($config['query']); $i++) {
+            for ($i = 1; $i < $numQueries; $i++) {
                 $v2config['attr_queries']['query' . $i] = [
                     'database' => 'default',
                     'query' => $config['query'][$i],
