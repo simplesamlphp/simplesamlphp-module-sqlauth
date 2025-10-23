@@ -7,6 +7,7 @@ require_once($projectRoot . '/vendor/autoload.php');
 
 
 // Load our wrapper class to get around login() being declared protected in SQL.php
+require_once($projectRoot . '/tests/src/Auth/Source/WrapperInterface.php');
 require_once($projectRoot . '/tests/src/Auth/Source/SQLWrapper.php');
 require_once($projectRoot . '/tests/src/Auth/Source/SQL2Wrapper.php');
 require_once($projectRoot . '/tests/src/Auth/Source/SQL1CompatWrapper.php');
