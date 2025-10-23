@@ -30,7 +30,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "SimpleSAML\\Test\\Utils\\": "vendor/simplesamlphp/simplesamlphp/tests/Utils"
+            "SimpleSAML\\Test\\Utils\\": "vendor/simplesamlphp/simplesamlphp/tests/Utils",
+            "SimpleSAML\\Test\\Module\\sqlauth\\Auth\\Source\\": "tests/src/Auth/Source/"
         }
     },
     "require": {
