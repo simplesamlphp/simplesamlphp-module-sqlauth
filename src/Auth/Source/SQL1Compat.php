@@ -55,6 +55,15 @@ class SQL1Compat extends SQL2
             }
         }
 
+        // Copy other config keys that are not specific to SQL1 (eg. core:login_links)
+        foreach (array_keys($config) as $key) {
+            if (in_array($key, ['dsn', 'username', 'password', 'query', 'username_regex'])) {
+                continue;
+            }
+
+            $v2config[$key] = $config[$key];
+        }
+
         parent::__construct($info, $v2config);
     }
 }
