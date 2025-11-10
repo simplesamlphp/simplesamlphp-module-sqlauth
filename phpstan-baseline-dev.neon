@@ -7,6 +7,12 @@ parameters:
 			path: tests/src/Auth/Source/SQL2MultipleAuthTest.php
 
 		-
+			message: '#^Property SimpleSAML\\Test\\Module\\sqlauth\\Auth\\Source\\SQL2NonExistentDbTest\:\:\$config type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/src/Auth/Source/SQL2NonExistentDbTest.php
+
+		-
 			message: '#^Property SimpleSAML\\Test\\Module\\sqlauth\\Auth\\Source\\SQL2SimpleTest\:\:\$config type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
