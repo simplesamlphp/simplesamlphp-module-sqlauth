@@ -34,6 +34,7 @@ class SQL2NonExistentDbTest extends TestCase
         ],
     ];
 
+
     public function testNonExistentDatabaseFailure(): void
     {
         $this->expectException(Exception::class);
