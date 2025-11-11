@@ -113,7 +113,12 @@ class SQL2 extends UserPassBase
         }
 
         // Check auth_queries configuration that all required parameters are present
-        if (array_key_exists('auth_queries', $config)) {
+        if (!array_key_exists('auth_queries', $config)) {
+            throw new Exception(
+                'Missing required attribute \'auth_queries\' for authentication source ' .
+                $this->authId,
+            );
+        } else {
             if (!is_array($config['auth_queries'])) {
                 throw new Exception('Required parameter \'auth_queries\' for authentication source ' .
                     $this->authId . ' was provided and is expected to be an array. Instead it was: ' .
@@ -197,11 +202,6 @@ class SQL2 extends UserPassBase
                         $authQueryConfig['password_verify_hash_column'];
                 }
             }
-        } else {
-            throw new Exception(
-                'Missing required attribute \'auth_queries\' for authentication source ' .
-                $this->authId,
-            );
         }
 
         // attr_queries is optional, but if specified, we need to check the parameters
