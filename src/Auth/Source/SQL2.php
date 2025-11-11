@@ -498,7 +498,7 @@ class SQL2 extends UserPassBase
     ): array {
 
         $attributes = [];
-        $winning_auth_query = null;
+        $winningAuthQuery = null;
 
         // Run authentication queries in order until one succeeds.
         foreach ($this->authQueries as $queryname => &$queryConfig) {
@@ -543,7 +543,7 @@ class SQL2 extends UserPassBase
                 if (array_key_exists('extract_userid_from', $queryConfig)) {
                     $queryConfig['_extracted_userid'] = $data[0][$queryConfig['extract_userid_from']];
                 }
-                $winning_auth_query = $queryname;
+                $winningAuthQuery = $queryname;
 
                 $forbiddenAttributes = [];
                 if (array_key_exists('password_verify_hash_column', $queryConfig)) {
@@ -572,22 +572,22 @@ class SQL2 extends UserPassBase
             Logger::debug(
                 'sqlauth:' . $this->authId . ': ' .
                 'Considering attribute query ' . $attrQueryConfig['query'] .
-                ' for winning auth query ' . $winning_auth_query .
+                ' for winning auth query ' . $winningAuthQuery .
                 ' with only_for_auth ' . implode(',', $attrQueryConfig['only_for_auth'] ?? []),
             );
 
             if (
                 (!array_key_exists('only_for_auth', $attrQueryConfig)) ||
-                in_array($winning_auth_query, $attrQueryConfig['only_for_auth'], true)
+                in_array($winningAuthQuery, $attrQueryConfig['only_for_auth'], true)
             ) {
                 Logger::debug('sqlauth:' . $this->authId . ': Running attribute query ' . $attrQueryConfig['query'] .
-                             ' for winning auth query ' . $winning_auth_query);
+                             ' for winning auth query ' . $winningAuthQuery);
 
                 $db = $this->connect($attrQueryConfig['database']);
 
                 try {
-                    $params = ($this->authQueries[$winning_auth_query]['_extracted_userid'] !== null) ?
-                        ['userid' => $this->authQueries[$winning_auth_query]['_extracted_userid']] :
+                    $params = ($this->authQueries[$winningAuthQuery]['_extracted_userid'] !== null) ?
+                        ['userid' => $this->authQueries[$winningAuthQuery]['_extracted_userid']] :
                         ['username' => $username];
                     $data = $this->executeQuery($db, $attrQueryConfig['query'], $params);
                 } catch (PDOException $e) {
@@ -602,7 +602,7 @@ class SQL2 extends UserPassBase
                 $this->extractAttributes($attributes, $data, []);
             } else {
                 Logger::debug('sqlauth:' . $this->authId . ': Skipping attribute query ' . $attrQueryConfig['query'] .
-                             ' because it does not apply to winning auth query ' . $winning_auth_query);
+                             ' because it does not apply to winning auth query ' . $winningAuthQuery);
             }
         }
 
