@@ -434,7 +434,6 @@ class SQL2 extends UserPassBase
             throw new Error\Error('WRONGUSERPASS');
         }
 
-        $validPasswordHashFound = false;
         $passwordHash = null;
         foreach ($data as $row) {
             if ((!array_key_exists($hashColumn, $row)) || is_null($row[$hashColumn])) {
@@ -445,9 +444,16 @@ class SQL2 extends UserPassBase
                 ));
                 throw new Error\Error('WRONGUSERPASS');
             }
-            if (($passwordHash === null) && (strlen($row[$hashColumn]) > 0)) {
+
+            if (strlen($row[$hashColumn]) === 0) {
+                Logger::error(sprintf(
+                    'sqlauth:%s: column `%s` must contain a valid password hash.',
+                    $this->authId,
+                    $hashColumn,
+                ));
+                throw new Error\Error('WRONGUSERPASS');
+            } elseif ($passwordHash === null) {
                 $passwordHash = $row[$hashColumn];
-                $validPasswordHashFound = true;
             } elseif ($passwordHash != $row[$hashColumn]) {
                 Logger::error(sprintf(
                     'sqlauth:%s: column %s must be THE SAME in every result tuple.',
@@ -455,17 +461,10 @@ class SQL2 extends UserPassBase
                     $hashColumn,
                 ));
                 throw new Error\Error('WRONGUSERPASS');
-            } elseif (strlen($row[$hashColumn]) === 0) {
-                Logger::error(sprintf(
-                    'sqlauth:%s: column `%s` must contain a valid password hash.',
-                    $this->authId,
-                    $hashColumn,
-                ));
-                throw new Error\Error('WRONGUSERPASS');
             }
         }
 
-        if ((!$validPasswordHashFound) || (!password_verify($password, $passwordHash))) {
+        if (($passwordHash == null) || (!password_verify($password, $passwordHash))) {
             Logger::error('sqlauth:' . $this->authId . ': Auth query ' . $queryname .
                             ' password verification failed');
             /* Authentication with verify_password() failed, however that only means that
