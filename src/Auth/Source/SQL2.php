@@ -60,7 +60,9 @@ class SQL2 extends UserPassBase
         parent::__construct($info, $config);
 
         // Check databases configuration that all required parameters are present
-        if (array_key_exists('databases', $config)) {
+        if (!array_key_exists('databases', $config)) {
+            throw new Exception('Missing required attribute \'databases\' for authentication source ' . $this->authId);
+        } else {
             if (!is_array($config['databases'])) {
                 throw new Exception('Required parameter \'databases\' for authentication source ' .
                     $this->authId . ' was provided and is expected to be an array. Instead it was: ' .
@@ -108,8 +110,6 @@ class SQL2 extends UserPassBase
                     'options' => $dbConfig['options'] ?? [],
                 ];
             }
-        } else {
-            throw new Exception('Missing required attribute \'databases\' for authentication source ' . $this->authId);
         }
 
         // Check auth_queries configuration that all required parameters are present
