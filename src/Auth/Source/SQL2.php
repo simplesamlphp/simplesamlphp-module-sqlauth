@@ -607,6 +607,7 @@ class SQL2 extends UserPassBase
         }
 
         // At the end, disconnect from all databases
+        $db = null;
         foreach ($this->databases as $dbname => $dbConfig) {
             if ($dbConfig['_pdo'] !== null) {
                 $this->databases[$dbname]['_pdo'] = null;
