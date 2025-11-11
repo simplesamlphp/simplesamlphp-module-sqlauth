@@ -7,17 +7,13 @@ namespace SimpleSAML\Test\Module\sqlauth\Auth\Source;
 use PDO;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Test for the core:AttributeLimit filter.
- *
- * @covers \SimpleSAML\Module\core\Auth\Process\AttributeLimit
- */
+#CoversClass(\SimpleSAML\Module\sqlauth\Auth\Source\PasswordVerify::class)
 class PasswordVerifyTest extends TestCase
 {
     /** @var array<string, string> */
     private array $info = ['AuthId' => 'testAuthId'];
 
-    /** @var array<string, string|null> */
+    /** @var array<string, list<string>|string|null> */
     private array $config = [
         "dsn" => 'sqlite:file::memory:?cache=shared',
         "username" => "notused",
@@ -81,11 +77,21 @@ class PasswordVerifyTest extends TestCase
     }
 
 
+    /**
+     * @param array<mixed> $info
+     * @param array<mixed> $config
+     */
+    protected function createWrapper(array $info, array $config): WrapperInterface
+    {
+        return new PasswordVerifyWrapper($info, $config);
+    }
+
+
     public function testBasicSingleSuccess(): void
     {
         // Correct username/password
         $this->config['query'] = "select givenName, email, passwordhash from users where uid=:username";
-        $ret = (new PasswordVerifyWrapper($this->info, $this->config))->callLogin('bob', 'password1');
+        $ret = $this->createWrapper($this->info, $this->config)->callLogin('bob', 'password1');
         asort($ret);
         $this->assertCount(2, $ret);
         $this->assertEquals($ret, [
@@ -100,7 +106,7 @@ class PasswordVerifyTest extends TestCase
         $this->expectException(\SimpleSAML\Error\Error::class);
         // Wrong username/password
         $this->config['query'] = "select givenName, email, passwordhash from users where uid=:username";
-        $ret = (new PasswordVerifyWrapper($this->info, $this->config))->callLogin('alice', 'wrong');
+        $ret = $this->createWrapper($this->info, $this->config)->callLogin('alice', 'wrong');
         $this->assertCount(0, $ret);
     }
 
@@ -110,7 +116,7 @@ class PasswordVerifyTest extends TestCase
         $this->expectException(\SimpleSAML\Error\Error::class);
         // Wrong username/password
         $this->config['query'] = "select givenName, email, passwordhash from users where uid=:username";
-        $ret = (new PasswordVerifyWrapper($this->info, $this->config))->callLogin('henry', 'boo');
+        $ret = $this->createWrapper($this->info, $this->config)->callLogin('henry', 'boo');
         $this->assertCount(0, $ret);
     }
 
@@ -120,7 +126,7 @@ class PasswordVerifyTest extends TestCase
         $this->expectException(\SimpleSAML\Error\Error::class);
         // Wrong username/password
         $this->config['query'] = "select givenName, email, passwordhash from users where uid=:username";
-        $ret = (new PasswordVerifyWrapper($this->info, $this->config))->callLogin('alice2', '');
+        $ret = $this->createWrapper($this->info, $this->config)->callLogin('alice2', '');
         $this->assertCount(0, $ret);
     }
 
@@ -131,10 +137,10 @@ class PasswordVerifyTest extends TestCase
         $this->config['query'] = "
             select u.givenName, u.email, ug.groupname, passwordhash
             from users u left join usergroups ug on (u.uid=ug.uid)
-            where u.uid=:username ";
-        $ret = (new PasswordVerifyWrapper($this->info, $this->config))->callLogin('bob', 'password1');
+            where u.uid=:username 
+            order by ug.groupname";
+        $ret = $this->createWrapper($this->info, $this->config)->callLogin('bob', 'password1');
         asort($ret);
-        asort($ret['groupname']);
         $this->assertCount(3, $ret);
         $this->assertEquals($ret, [
             'email' => ['bob@example.com'],
@@ -152,7 +158,7 @@ class PasswordVerifyTest extends TestCase
             select u.givenName, u.email, ug.groupname, passwordhash
             from users u left join usergroups ug on (u.uid=ug.uid)
             where u.uid=:username";
-        $ret = (new PasswordVerifyWrapper($this->info, $this->config))->callLogin('alice', 'wrong');
+        $ret = $this->createWrapper($this->info, $this->config)->callLogin('alice', 'wrong');
         $this->assertCount(0, $ret);
     }
 
@@ -162,11 +168,10 @@ class PasswordVerifyTest extends TestCase
         // Correct username/password
         $this->config['query'] = [
             "select givenName, email, passwordhash from users where uid=:username",
-            "select groupname from usergroups where uid=:username",
+            "select groupname from usergroups where uid=:username order by groupname",
         ];
-        $ret = (new PasswordVerifyWrapper($this->info, $this->config))->callLogin('bob', 'password1');
+        $ret = $this->createWrapper($this->info, $this->config)->callLogin('bob', 'password1');
         asort($ret);
-        asort($ret['groupname']);
         $this->assertCount(3, $ret);
         $this->assertEquals($ret, [
             'email' => ['bob@example.com'],
@@ -184,7 +189,7 @@ class PasswordVerifyTest extends TestCase
             "select givenName, email, passwordhash from users where uid=:username",
             "select groupname from usergroups where uid=:username",
         ];
-        $ret = (new PasswordVerifyWrapper($this->info, $this->config))->callLogin('alice', 'wrong');
+        $ret = $this->createWrapper($this->info, $this->config)->callLogin('alice', 'wrong');
         $this->assertCount(0, $ret);
     }
 
@@ -195,11 +200,10 @@ class PasswordVerifyTest extends TestCase
         $this->config['query'] = [
             "select givenName, email, passwordhash from users where uid=:username",
             "select groupname from usergroups where uid=:username and groupname like '%nomatch%'",
-            "select groupname from usergroups where uid=:username and groupname like 'stud%'",
+            "select groupname from usergroups where uid=:username and groupname like 'stud%' order by groupname",
         ];
-        $ret = (new PasswordVerifyWrapper($this->info, $this->config))->callLogin('bob', 'password1');
+        $ret = $this->createWrapper($this->info, $this->config)->callLogin('bob', 'password1');
         asort($ret);
-        asort($ret['groupname']);
         $this->assertCount(3, $ret);
         $this->assertEquals($ret, [
             'email' => ['bob@example.com'],
@@ -214,12 +218,11 @@ class PasswordVerifyTest extends TestCase
         // Correct username/password. Second query returns a row, third query appends one row
         $this->config['query'] = [
             "select givenName, email, passwordhash from users where uid=:username",
-            "select groupname from usergroups where uid=:username and groupname like 'stud%'",
-            "select groupname from usergroups where uid=:username and groupname like '%sers'",
+            "select groupname from usergroups where uid=:username and groupname like 'stud%' order by groupname",
+            "select groupname from usergroups where uid=:username and groupname like '%sers' order by groupname",
         ];
-        $ret = (new PasswordVerifyWrapper($this->info, $this->config))->callLogin('bob', 'password1');
+        $ret = $this->createWrapper($this->info, $this->config)->callLogin('bob', 'password1');
         asort($ret);
-        asort($ret['groupname']);
         $this->assertCount(3, $ret);
         $this->assertEquals($ret, [
             'email' => ['bob@example.com'],
