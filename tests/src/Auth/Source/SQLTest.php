@@ -6,19 +6,17 @@ namespace SimpleSAML\Test\Module\sqlauth\Auth\Source;
 
 use PDO;
 use PHPUnit\Framework\TestCase;
-use SimpleSAML\Test\Module\sqlauth\Auth\Source\SQLWrapper;
 
 /**
  * Test for the core:AttributeLimit filter.
- *
- * @covers \SimpleSAML\Module\core\Auth\Process\AttributeLimit
  */
+#CoversClass(SimpleSAML\Module\sqlauth\Auth\Source\SQL::class)
 class SQLTest extends TestCase
 {
     /** @var array<string, string> */
     private array $info = ['AuthId' => 'testAuthId'];
 
-    /** @var array<string, string|null> */
+    /** @var array<string, list<string>|string|null> */
     private array $config = [
         "dsn" => 'sqlite:file::memory:?cache=shared',
         "username" => "notused",
@@ -79,11 +77,21 @@ class SQLTest extends TestCase
     }
 
 
+    /**
+     * @param array<mixed> $info
+     * @param array<mixed> $config
+     */
+    protected function createWrapper(array $info, array $config): WrapperInterface
+    {
+        return new SQLWrapper($info, $config);
+    }
+
+
     public function testBasicSingleSuccess(): void
     {
         // Correct username/password
         $this->config['query'] = "select givenName, email from users where uid=:username and password=:password";
-        $ret = (new SQLWrapper($this->info, $this->config))->callLogin('bob', 'password');
+        $ret = $this->createWrapper($this->info, $this->config)->callLogin('bob', 'password');
         asort($ret);
         $this->assertCount(2, $ret);
         $this->assertEquals($ret, [
@@ -98,7 +106,7 @@ class SQLTest extends TestCase
         // Correct username/password
         $this->config['query'] = "select givenName, email from users where uid=:username and password=:password";
         $this->config['username_regex'] = '/^[a-z]+$/'; // Username must be a single lower case word
-        $ret = (new SQLWrapper($this->info, $this->config))->callLogin('bob', 'password');
+        $ret = $this->createWrapper($this->info, $this->config)->callLogin('bob', 'password');
         asort($ret);
         $this->assertCount(2, $ret);
         $this->assertEquals($ret, [
@@ -114,7 +122,7 @@ class SQLTest extends TestCase
         // Correct username/password, but doesn't match the username regex
         $this->config['query'] = "select givenName, email from users where uid=:username and password=:password";
         $this->config['username_regex'] = '/^\d+$/'; // Username must be a non-negative integer
-        $ret = (new SQLWrapper($this->info, $this->config))->callLogin('bob', 'password');
+        $ret = $this->createWrapper($this->info, $this->config)->callLogin('bob', 'password');
         asort($ret);
         $this->assertCount(0, $ret);
     }
@@ -126,7 +134,7 @@ class SQLTest extends TestCase
         // Correct username/password, but doesn't match the username regex
         $this->config['query'] = "select givenName, email from users where uid=:username and password=:password";
         $this->config['username_regex'] = '/^\d+$/'; // Username must be a non-negative integer
-        $ret = (new SQLWrapper($this->info, $this->config))->callLogin('henry', 'password');
+        $ret = $this->createWrapper($this->info, $this->config)->callLogin('henry', 'password');
         asort($ret);
         $this->assertCount(0, $ret);
     }
@@ -137,7 +145,7 @@ class SQLTest extends TestCase
         $this->expectException(\SimpleSAML\Error\Error::class);
         // Wrong username/password
         $this->config['query'] = "select givenName, email from users where uid=:username and password=:password";
-        $ret = (new SQLWrapper($this->info, $this->config))->callLogin('alice', 'wrong');
+        $ret = $this->createWrapper($this->info, $this->config)->callLogin('alice', 'wrong');
         $this->assertCount(0, $ret);
     }
 
@@ -148,10 +156,10 @@ class SQLTest extends TestCase
         $this->config['query'] = "
             select u.givenName, u.email, ug.groupname
             from users u left join usergroups ug on (u.uid=ug.uid)
-            where u.uid=:username and u.password=:password";
-        $ret = (new SQLWrapper($this->info, $this->config))->callLogin('bob', 'password');
+            where u.uid=:username and u.password=:password
+            order by ug.groupname";
+        $ret = $this->createWrapper($this->info, $this->config)->callLogin('bob', 'password');
         asort($ret);
-        asort($ret['groupname']);
         $this->assertCount(3, $ret);
         $this->assertEquals($ret, [
             'email' => ['bob@example.com'],
@@ -169,7 +177,7 @@ class SQLTest extends TestCase
             select u.givenName, u.email, ug.groupname
             from users u left join usergroups ug on (u.uid=ug.uid)
             where u.uid=:username and u.password=:password";
-        $ret = (new SQLWrapper($this->info, $this->config))->callLogin('alice', 'wrong');
+        $ret = $this->createWrapper($this->info, $this->config)->callLogin('alice', 'wrong');
         $this->assertCount(0, $ret);
     }
 
@@ -179,11 +187,10 @@ class SQLTest extends TestCase
         // Correct username/password
         $this->config['query'] = [
             "select givenName, email from users where uid=:username and password=:password",
-            "select groupname from usergroups where uid=:username",
+            "select groupname from usergroups where uid=:username order by groupname",
         ];
-        $ret = (new SQLWrapper($this->info, $this->config))->callLogin('bob', 'password');
+        $ret = $this->createWrapper($this->info, $this->config)->callLogin('bob', 'password');
         asort($ret);
-        asort($ret['groupname']);
         $this->assertCount(3, $ret);
         $this->assertEquals($ret, [
             'email' => ['bob@example.com'],
@@ -201,7 +208,7 @@ class SQLTest extends TestCase
             "select givenName, email from users where uid=:username and password=:password",
             "select groupname from usergroups where uid=:username",
         ];
-        $ret = (new SQLWrapper($this->info, $this->config))->callLogin('alice', 'wrong');
+        $ret = $this->createWrapper($this->info, $this->config)->callLogin('alice', 'wrong');
         $this->assertCount(0, $ret);
     }
 
@@ -211,12 +218,11 @@ class SQLTest extends TestCase
         // Correct username/password. Second query returns no rows, third query returns just one row
         $this->config['query'] = [
             "select givenName, email from users where uid=:username and password=:password",
-            "select groupname from usergroups where uid=:username and groupname like '%nomatch%'",
-            "select groupname from usergroups where uid=:username and groupname like 'stud%'",
+            "select groupname from usergroups where uid=:username and groupname like '%nomatch%' order by groupname",
+            "select groupname from usergroups where uid=:username and groupname like 'stud%' order by groupname",
         ];
-        $ret = (new SQLWrapper($this->info, $this->config))->callLogin('bob', 'password');
+        $ret = $this->createWrapper($this->info, $this->config)->callLogin('bob', 'password');
         asort($ret);
-        asort($ret['groupname']);
         $this->assertCount(3, $ret);
         $this->assertEquals($ret, [
             'email' => ['bob@example.com'],
@@ -231,12 +237,11 @@ class SQLTest extends TestCase
         // Correct username/password. Second query returns a row, third query appends one row
         $this->config['query'] = [
             "select givenName, email from users where uid=:username and password=:password",
-            "select groupname from usergroups where uid=:username and groupname like 'stud%'",
-            "select groupname from usergroups where uid=:username and groupname like '%sers'",
+            "select groupname from usergroups where uid=:username and groupname like 'stud%' order by groupname",
+            "select groupname from usergroups where uid=:username and groupname like '%sers' order by groupname",
         ];
-        $ret = (new SQLWrapper($this->info, $this->config))->callLogin('bob', 'password');
+        $ret = $this->createWrapper($this->info, $this->config)->callLogin('bob', 'password');
         asort($ret);
-        asort($ret['groupname']);
         $this->assertCount(3, $ret);
         $this->assertEquals($ret, [
             'email' => ['bob@example.com'],
