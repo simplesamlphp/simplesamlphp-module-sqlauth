@@ -39,7 +39,7 @@
         "ext-pdo": "*",
 
         "simplesamlphp/assert": "~1.9.1",
-        "simplesamlphp/composer-module-installer": "~1.5.0",
+        "simplesamlphp/composer-module-installer": "~1.6.0",
         "simplesamlphp/simplesamlphp": "^2.2"
     },
     "require-dev": {
