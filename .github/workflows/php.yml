@@ -217,7 +217,7 @@ jobs:
         with:
           # Should be the lowest supported version
           php-version: '8.2'
-          extensions: ctype, date, dom, fileinfo, filter, hash, intl, mbstring, openssl, pcre, pdo, posix, spl, xml, zip
+          extensions: ctype, date, dom, fileinfo, filter, hash, intl, mbstring, openssl, pcre, pdo, posix, spl, xml
           tools: composer
           coverage: none
 
@@ -237,7 +237,7 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Install Composer dependencies
-        run: composer install --no-progress --prefer-dist --optimize-autoloader --ignore-platform-req=ext-posix
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
 
       - name: Security check for locked dependencies
         run: composer audit
