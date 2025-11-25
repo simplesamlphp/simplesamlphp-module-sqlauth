@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SimpleSAML\Test\Module\sqlauth\Auth\Source;
 
-use SimpleSAML\Module\sqlauth\Auth\Source\SQL;
+use SimpleSAML\Module\sqlauth\Auth\Source\SQL1Compat;
 
 /**
  * This class only exists to allow us to call the protected login() method.
@@ -13,7 +13,7 @@ use SimpleSAML\Module\sqlauth\Auth\Source\SQL;
  * method in SQL.php
  */
 
-class SQLWrapper extends SQL implements WrapperInterface
+class SQL1CompatWrapper extends SQL1Compat implements WrapperInterface
 {
     /**
      * @param array<mixed> $info

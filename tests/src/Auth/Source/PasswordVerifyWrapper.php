@@ -13,7 +13,7 @@ use SimpleSAML\Module\sqlauth\Auth\Source\PasswordVerify;
  * method in PasswordVerify.php
  */
 
-class PasswordVerifyWrapper extends PasswordVerify
+class PasswordVerifyWrapper extends PasswordVerify implements WrapperInterface
 {
     /**
      * @param array<mixed> $info
