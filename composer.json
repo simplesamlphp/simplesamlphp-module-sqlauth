@@ -35,15 +35,15 @@
         }
     },
     "require": {
-        "php": "^8.2",
+        "php": "^8.3",
         "ext-pdo": "*",
 
-        "simplesamlphp/assert": "~1.9.1",
-        "simplesamlphp/composer-module-installer": "~1.6.0",
-        "simplesamlphp/simplesamlphp": "^2.2"
+        "simplesamlphp/assert": "~1.9",
+        "simplesamlphp/composer-module-installer": "~1.6",
+        "simplesamlphp/simplesamlphp": "^2.5@RC"
     },
     "require-dev": {
-        "simplesamlphp/simplesamlphp-test-framework": "~1.10.3"
+        "simplesamlphp/simplesamlphp-test-framework": "~1.11"
     },
     "support": {
         "issues": "https://github.com/simplesamlphp/simplesamlphp-module-sqlauth/issues",
