@@ -34,31 +34,26 @@ class SQL extends UserPassBase
 {
     /**
      * The DSN we should connect to.
-     * @var string
      */
     private string $dsn;
 
     /**
      * The username we should connect to the database with.
-     * @var string
      */
     private string $username;
 
     /**
      * The password we should connect to the database with.
-     * @var string
      */
     private string $password;
 
     /**
      * An optional regex that the username should match.
-     * @var string
      */
     protected ?string $username_regex;
 
     /**
      * The options that we should connect to the database with.
-     * @var array
      */
     private array $options = [];
 
@@ -66,7 +61,6 @@ class SQL extends UserPassBase
      * The query or queries we should use to retrieve the attributes for the user.
      *
      * The username and password will be available as :username and :password.
-     * @var array
      */
     protected array $query;
 
