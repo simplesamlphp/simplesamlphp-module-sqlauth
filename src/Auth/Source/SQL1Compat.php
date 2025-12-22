@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace SimpleSAML\Module\sqlauth\Auth\Source;
 
+use SimpleSAML\Logger;
+
 /**
+ * @deprecated Use the SQL2 class and the new SQL2 configuration format instead.
+ *
  * @package SimpleSAMLphp
  */
 
@@ -18,6 +22,11 @@ class SQL1Compat extends SQL2
      */
     public function __construct(array $info, array $config)
     {
+        Logger::warning(
+            'The sqlauth:SQL and sqlauth:SQL1Compat authentication sources are deprecated. '.
+            'Please migrate to sqlauth:SQL2 with the new configuration format.'
+        );
+
         /* Transform SQL (version 1) config to SQL2 config
          * Version 1 supported only one database, but multiple queries. The first query was defined
          * to be the "authentication query", all subsequent queries were "attribute queries".

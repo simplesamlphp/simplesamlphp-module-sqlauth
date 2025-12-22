@@ -7,14 +7,11 @@ The authentication can be done in one of two ways:
 - Most commonly, as a part of the SQL query itself (ie. using SQL functions to hash a parameterized password and compare that to a value stored in the database).
 - Less commonly, just store the hash in the database, retrieve that then compare that hash using PHP's `password_verify()` function to authenticate. This is useful in cases where there is minimal support in the database or to allow the same code to work against many databases without modification. The differences in how this is configured are in a section towards the bottom of this file.
 
-There are two different configuration formats supported ("version 1" and "version 2"). Version 1 is simpler, but is more limited in functionality. Version 2 is more powerful and configurable, but a little more verbose. If you wish to authenticate or gather attributes from more than one SQL database, or need more than one SQL query for authentication then you definitely need Version 2.
+There are two different configuration formats ("Version 1" and "Version 2"). We highly recommend using the more powerful and configurable Version 2 configuration. Version 1 is now considered deprecated and support for this legacy configuration format will be removed in a future release.
 
-The Version 1 configuration support comes in two flavours (but identical configurations):
+If you are starting out you should use the Version 2 (`sqlauth:SQL2`) configuration format.
 
-- `sqlauth:SQL` uses the legacy Version 1 configuration format and code. Eventually the old code will be phased out, and `sqlauth:SQL` will become a synonym for `sqlauth:SQL1Compat`.
-- `sqlauth:SQL1Compat` uses the legacy Version 1 configuration, but applies it to the Version 2 code.
-
-If you are starting out we recommend the Version 2 (`sqlauth:SQL2`) configuration format.
+If you have existing Version 1 (`sqlauth:SQL` or `sqlauth:SQL1Compat`) configuration, you should migrate to the new Version 2 (`sqlauth:SQL2`) configuration format.
 
 You enable the module in `config/config.php`.
 
