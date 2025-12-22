@@ -10,4 +10,6 @@ namespace SimpleSAML\Module\sqlauth\Auth\Source;
  * @package SimpleSAMLphp
  */
 
-class SQL extends SQL1Compat {}
+class SQL extends SQL1Compat
+{
+}

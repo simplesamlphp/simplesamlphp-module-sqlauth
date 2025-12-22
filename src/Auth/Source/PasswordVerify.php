@@ -4,19 +4,6 @@ declare(strict_types=1);
 
 namespace SimpleSAML\Module\sqlauth\Auth\Source;
 
-use SimpleSAML\Assert\Assert;
-use SimpleSAML\Error;
-use SimpleSAML\Logger;
-use SimpleSAML\Module\sqlauth\Auth\Source\SQL;
-
-use function array_key_exists;
-use function array_keys;
-use function count;
-use function implode;
-use function is_null;
-use function password_verify;
-use function sprintf;
-
 /**
  * Simple SQL authentication source
  *
@@ -44,4 +31,6 @@ use function sprintf;
  * @package SimpleSAMLphp
  */
 
-class PasswordVerify extends PasswordVerify1Compat {}
+class PasswordVerify extends PasswordVerify1Compat
+{
+}

@@ -23,8 +23,8 @@ class SQL1Compat extends SQL2
     public function __construct(array $info, array $config)
     {
         Logger::warning(
-            'The sqlauth:SQL and sqlauth:SQL1Compat authentication sources are deprecated. '.
-            'Please migrate to sqlauth:SQL2 with the new configuration format.'
+            'The sqlauth:SQL and sqlauth:SQL1Compat authentication sources are deprecated. ' .
+            'Please migrate to sqlauth:SQL2 with the new configuration format.',
         );
 
         /* Transform SQL (version 1) config to SQL2 config
