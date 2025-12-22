@@ -11,6 +11,23 @@ use SimpleSAML\Error;
 use SimpleSAML\Logger;
 use SimpleSAML\Module\core\Auth\UserPassBase;
 
+use function array_key_exists;
+use function array_keys;
+use function count;
+use function explode;
+use function implode;
+use function in_array;
+use function is_array;
+use function is_null;
+use function is_string;
+use function password_verify;
+use function preg_match;
+use function preg_replace;
+use function sprintf;
+use function strlen;
+use function strtolower;
+use function var_export;
+
 /**
  * An authentication source source that uses (potentially multiple) SQL databases.
  *
@@ -61,45 +78,65 @@ class SQL2 extends UserPassBase
 
         // Check databases configuration that all required parameters are present
         if (!array_key_exists('databases', $config)) {
-            throw new Exception('Missing required attribute \'databases\' for authentication source ' . $this->authId);
+            throw new Exception(sprintf(
+                'Missing required attribute \'databases\' for authentication source \'%s\'',
+                $this->authId,
+            ));
         } else {
             if (!is_array($config['databases'])) {
-                throw new Exception('Required parameter \'databases\' for authentication source ' .
-                    $this->authId . ' was provided and is expected to be an array. Instead it was: ' .
-                    var_export($config['databases'], true));
+                throw new Exception(sprintf(
+                    'Required parameter \'databases\' for authentication source \'%s\''
+                    . ' was provided and is expected to be an array. Instead it was: %s',
+                    $this->authId,
+                    var_export($config['databases'], true),
+                ));
             }
 
             if (empty($config['databases'])) {
-                throw new Exception('Required parameter \'databases\' for authentication source ' .
-                    $this->authId . ' was provided but is an empty array.');
+                throw new Exception(sprintf(
+                    'Required parameter \'databases\' for authentication source \'%s\''
+                    . ' was provided but is an empty array.',
+                    $this->authId,
+                ));
             }
 
             foreach ($config['databases'] as $dbname => $dbConfig) {
                 if (!is_array($dbConfig)) {
-                    throw new Exception('Each entry in the ' .
-                        $dbname . ' \'databases\' parameter for authentication source ' .
-                        $this->authId . ' is expected to be an array. Instead it was: ' .
-                        var_export($dbConfig, true));
+                    throw new Exception(sprintf(
+                        'Each entry in the %s \'databases\' parameter for authentication source \'%s\''
+                        . ' is expected to be an array. Instead it was: %s',
+                        $dbname,
+                        $this->authId,
+                        var_export($dbConfig, true),
+                    ));
                 }
                 foreach (['dsn', 'username', 'password'] as $param) {
                     if (!array_key_exists($param, $dbConfig)) {
-                        throw new Exception('Database ' .
-                            $dbname . ' is missing required attribute \'' .
-                            $param . '\' for authentication source ' .
-                            $this->authId);
+                        throw new Exception(sprintf(
+                            'Database %s is missing required attribute \'%s\' for authentication source \'%s\'',
+                            $dbname,
+                            $param,
+                            $this->authId,
+                        ));
                     }
                     if (!is_string($dbConfig[$param])) {
-                        throw new Exception('Expected parameter \'' . $param .
-                            '\' for authentication source ' . $this->authId .
-                            ' to be a string. Instead it was: ' .
-                            var_export($config[$param], true));
+                        throw new Exception(sprintf(
+                            'Expected parameter \'%s\' for authentication source %s to be a string. '
+                            . 'Instead it was: %s',
+                            $dbname,
+                            $this->authId,
+                            var_export($config[$param], true),
+                        ));
                     }
                 }
 
                 if (array_key_exists('options', $dbConfig) && !is_array($dbConfig['options'])) {
-                    throw new Exception('Optional parameter \'options\' for authentication source ' .
-                        $this->authId . ' was provided and is expected to be an array. Instead it was: ' .
-                        var_export($dbConfig['options'], true));
+                    throw new Exception(sprintf(
+                        'Optional parameter \'options\' for authentication source \'%s\''
+                        . ' was provided and is expected to be an array. Instead it was: %s',
+                        $this->authId,
+                        var_export($dbConfig['options'], true),
+                    ));
                 }
 
                 $this->databases[$dbname] = [
@@ -114,50 +151,66 @@ class SQL2 extends UserPassBase
 
         // Check auth_queries configuration that all required parameters are present
         if (!array_key_exists('auth_queries', $config)) {
-            throw new Exception(
-                'Missing required attribute \'auth_queries\' for authentication source ' .
+            throw new Exception(sprintf(
+                'Missing required attribute \'auth_queries\' for authentication source \'%s\'',
                 $this->authId,
-            );
+            ));
         } else {
             if (!is_array($config['auth_queries'])) {
-                throw new Exception('Required parameter \'auth_queries\' for authentication source ' .
-                    $this->authId . ' was provided and is expected to be an array. Instead it was: ' .
-                    var_export($config['auth_queries'], true));
+                throw new Exception(sprintf(
+                    'Required parameter \'auth_queries\' for authentication source \'%s\''
+                    . ' was provided and is expected to be an array. Instead it was: %s',
+                    $this->authId,
+                    var_export($config['auth_queries'], true),
+                ));
             }
 
             if (empty($config['auth_queries'])) {
-                throw new Exception('Required parameter \'auth_queries\' for authentication source ' .
-                    $this->authId . ' was provided but is an empty array.');
+                throw new Exception(sprintf(
+                    'Required parameter \'auth_queries\' for authentication source \'%s\''
+                    . ' was provided but is an empty array.',
+                    $this->authId,
+                ));
             }
 
             foreach ($config['auth_queries'] as $authQueryName => $authQueryConfig) {
                 if (!is_array($authQueryConfig)) {
-                    throw new Exception('Each entry in the ' .
-                        $authQueryName . ' \'auth_queries\' parameter for authentication source ' .
-                        $this->authId . ' is expected to be an array. Instead it was: ' .
-                        var_export($authQueryConfig, true));
+                    throw new Exception(sprintf(
+                        'Each entry in the %s \'auth_queries\' parameter for authentication source '
+                        . '\'%s\' is expected to be an array. Instead it was: %s' .
+                        $authQueryName,
+                        $this->authId,
+                        var_export($authQueryConfig, true),
+                    ));
                 }
 
                 foreach (['database', 'query'] as $param) {
                     if (!array_key_exists($param, $authQueryConfig)) {
-                        throw new Exception('Auth query ' .
-                            $authQueryName . ' is missing required attribute \'' .
-                            $param . '\' for authentication source ' .
-                            $this->authId);
+                        throw new Exception(sprintf(
+                            'Auth query %s is missing required attribute \'%s\' for authentication source \'%s\'',
+                            $param,
+                            $authQueryName,
+                            $this->authId,
+                        ));
                     }
                     if (!is_string($authQueryConfig[$param])) {
-                        throw new Exception('Expected parameter \'' . $param .
-                            '\' for authentication source \'' . $this->authId . '\'' .
-                            ' to be a string. Instead it was: ' .
-                            var_export($authQueryConfig[$param], true));
+                        throw new Exception(sprintf(
+                            'Expected parameter \'%s\' for authentication source \'%s\' to be a string.'
+                            . ' Instead it was: %s',
+                            $param,
+                            $this->authId,
+                            var_export($authQueryConfig[$param], true),
+                        ));
                     }
                 }
 
                 if (!array_key_exists($authQueryConfig['database'], $this->databases)) {
-                    throw new Exception('Auth query ' .
-                        $authQueryName . ' references unknown database \'' .
-                        $authQueryConfig['database'] . '\' for authentication source ' .
-                        $this->authId);
+                    throw new Exception(sprintf(
+                        'Auth query %s references unknown database \'%s\' for authentication source \'%s\'',
+                        $authQueryName,
+                        $authQueryConfig['database'],
+                        $this->authId,
+                    ));
                 }
 
                 $this->authQueries[$authQueryName] = [
@@ -174,29 +227,36 @@ class SQL2 extends UserPassBase
 
                 if (array_key_exists('username_regex', $authQueryConfig)) {
                     if (!is_string($authQueryConfig['username_regex'])) {
-                        throw new Exception('Optional parameter \'username_regex\' for authentication source ' .
-                            $this->authId . ' was provided and is expected to be a string. Instead it was: ' .
-                            var_export($authQueryConfig['username_regex'], true));
+                        throw new Exception(sprintf(
+                            'Optional parameter \'username_regex\' for authentication source \'%s\''
+                            . ' was provided and is expected to be a string. Instead it was: %s',
+                            $this->authId,
+                            var_export($authQueryConfig['username_regex'], true),
+                        ));
                     }
                     $this->authQueries[$authQueryName]['username_regex'] = $authQueryConfig['username_regex'];
                 }
 
                 if (array_key_exists('extract_userid_from', $authQueryConfig)) {
                     if (!is_string($authQueryConfig['extract_userid_from'])) {
-                        throw new Exception('Optional parameter \'extract_userid_from\' for authentication source ' .
-                            $this->authId . ' was provided and is expected to be a string. Instead it was: ' .
-                            var_export($authQueryConfig['extract_userid_from'], true));
+                        throw new Exception(sprintf(
+                            'Optional parameter \'extract_userid_from\' for authentication source \'%s\''
+                            . ' was provided and is expected to be a string. Instead it was: %s',
+                            $this->authId,
+                            var_export($authQueryConfig['extract_userid_from'], true),
+                        ));
                     }
                     $this->authQueries[$authQueryName]['extract_userid_from'] = $authQueryConfig['extract_userid_from'];
                 }
 
                 if (array_key_exists('password_verify_hash_column', $authQueryConfig)) {
                     if (!is_string($authQueryConfig['password_verify_hash_column'])) {
-                        throw new Exception(
-                            'Optional parameter \'password_verify_hash_column\' for authentication source ' .
-                            $this->authId . ' was provided and is expected to be a string. Instead it was: ' .
+                        throw new Exception(sprintf(
+                            'Optional parameter \'password_verify_hash_column\' for authentication source \'%s\''
+                            . ' was provided and is expected to be a string. Instead it was: %s',
+                            $this->authId,
                             var_export($authQueryConfig['password_verify_hash_column'], true),
-                        );
+                        ));
                     }
                     $this->authQueries[$authQueryName]['password_verify_hash_column'] =
                         $authQueryConfig['password_verify_hash_column'];
@@ -207,29 +267,41 @@ class SQL2 extends UserPassBase
         // attr_queries is optional, but if specified, we need to check the parameters
         if (array_key_exists('attr_queries', $config)) {
             if (!is_array($config['attr_queries'])) {
-                throw new Exception('Optional parameter \'attr_queries\' for authentication source ' .
-                    $this->authId . ' was provided and is expected to be an array. Instead it was: ' .
-                    var_export($config['attr_queries'], true));
+                throw new Exception(sprintf(
+                    'Optional parameter \'attr_queries\' for authentication source \'%s\''
+                    . ' was provided and is expected to be an array. Instead it was: %s',
+                    $this->authId,
+                    var_export($config['attr_queries'], true),
+                ));
             }
 
             foreach ($config['attr_queries'] as $attrQueryConfig) {
                 if (!is_array($attrQueryConfig)) {
-                    throw new Exception('\'attr_queries\' parameter for authentication source ' .
-                        $this->authId . ' is expected to be an array. Instead it was: ' .
-                        var_export($attrQueryConfig, true));
+                    throw new Exception(sprintf(
+                        '\'attr_queries\' parameter for authentication source \'%s\''
+                        . ' is expected to be an array. Instead it was: %s' .
+                        $this->authId,
+                        var_export($attrQueryConfig, true),
+                    ));
                 }
 
                 foreach (['database', 'query'] as $param) {
                     if (!array_key_exists($param, $attrQueryConfig)) {
-                        throw new Exception('Attribute query is missing required attribute \'' .
-                            $param . '\' for authentication source ' .
-                            $this->authId);
+                        throw new Exception(sprintf(
+                            'Attribute query is missing required attribute \'%s\' for authentication source %s',
+                            $param,
+                            $this->authId,
+                        ));
                     }
+
                     if (!is_string($attrQueryConfig[$param])) {
-                        throw new Exception('Expected parameter \'' . $param .
-                            '\' for authentication source \'' . $this->authId . '\'' .
-                            ' to be a string. Instead it was: ' .
-                            var_export($attrQueryConfig[$param], true));
+                        throw new Exception(sprintf(
+                            'Expected parameter \'%s\' for authentication source \'%s\''
+                            . ' to be a string. Instead it was: %s',
+                            $param,
+                            $this->authId,
+                            var_export($attrQueryConfig[$param], true),
+                        ));
                     }
                 }
 
@@ -239,27 +311,37 @@ class SQL2 extends UserPassBase
                 ];
 
                 if (!array_key_exists($attrQueryConfig['database'], $this->databases)) {
-                    throw new Exception('Attribute query references unknown database \'' .
-                        $attrQueryConfig['database'] . '\' for authentication source ' .
-                        $this->authId);
+                    throw new Exception(sprintf(
+                        'Attribute query references unknown database \'%s\' for authentication source \'%s\'',
+                        $attrQueryConfig['database'],
+                        $this->authId,
+                    ));
                 }
 
                 if (array_key_exists('only_for_auth', $attrQueryConfig)) {
                     if (!is_array($attrQueryConfig['only_for_auth'])) {
-                        throw new Exception('Optional parameter \'only_for_auth\' for authentication source ' .
-                            $this->authId . ' was provided and is expected to be an array. Instead it was: ' .
-                            var_export($attrQueryConfig['only_for_auth'], true));
+                        throw new Exception(sprintf(
+                            'Optional parameter \'only_for_auth\' for authentication source \'%s\''
+                            . ' was provided and is expected to be an array. Instead it was: %s',
+                            $this->authId,
+                            var_export($attrQueryConfig['only_for_auth'], true),
+                        ));
                     }
                     foreach ($attrQueryConfig['only_for_auth'] as $authQueryName) {
                         if (!is_string($authQueryName)) {
-                            throw new Exception('Each entry in the \'only_for_auth\' array for authentication source ' .
-                                $this->authId . ' is expected to be a string. Instead it was: ' .
-                                var_export($authQueryName, true));
+                            throw new Exception(sprintf(
+                                'Each entry in the \'only_for_auth\' array for authentication source \'%s\''
+                                . ' is expected to be a string. Instead it was: %s',
+                                $this->authId,
+                                var_export($authQueryName, true),
+                            ));
                         }
                         if (!array_key_exists($authQueryName, $this->authQueries)) {
-                            throw new Exception('Attribute query references unknown auth query \'' .
-                                $authQueryName . '\' for authentication source ' .
-                                $this->authId);
+                            throw new Exception(sprintf(
+                                'Attribute query references unknown auth query \'%s\' for authentication source %s',
+                                $authQueryName,
+                                $this->authId,
+                            ));
                         }
                     }
                     $currentAttributeQuery['only_for_auth'] = $attrQueryConfig['only_for_auth'];
@@ -279,8 +361,11 @@ class SQL2 extends UserPassBase
     protected function connect(string $dbname): PDO
     {
         if (!array_key_exists($dbname, $this->databases)) {
-            throw new Exception('sqlauth:' . $this->authId . ': Attempt to connect to unknown database \'' .
-                $dbname . '\'');
+            throw new Exception(sprintf(
+                "sqlauth:%s: Attempt to connect to unknown database '%s'",
+                $this->authId,
+                $dbname,
+            ));
         }
         if ($this->databases[$dbname]['_pdo'] !== null) {
             // Already connected
@@ -296,11 +381,12 @@ class SQL2 extends UserPassBase
             );
         } catch (PDOException $e) {
             // Obfuscate the password if it's part of the dsn
-            $obfuscated_dsn =
-                preg_replace('/(user|password)=(.*?([;]|$))/', '${1}=***', $this->databases[$dbname]['dsn']);
-
-            throw new Exception('sqlauth:' . $this->authId . ': - Failed to connect to \'' .
-                $obfuscated_dsn . '\': ' . $e->getMessage());
+            throw new Exception(sprintf(
+                "sqlauth:%s: - Failed to connect to '%s': %s",
+                $this->authId,
+                preg_replace('/(user|password)=(.*?([;]|$))/', '${1}=***', $this->databases[$dbname]['dsn']),
+                $e->getMessage(),
+            ));
         }
 
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -320,7 +406,7 @@ class SQL2 extends UserPassBase
                 break;
         }
 
-        Logger::debug('sqlauth:' . $this->authId . ': Connected to database ' . $dbname);
+        Logger::debug(sprintf('sqlauth:%s: Connected to database %s', $this->authId, $dbname));
         $this->databases[$dbname]['_pdo'] = $db;
         return $db;
     }
@@ -375,23 +461,34 @@ class SQL2 extends UserPassBase
         try {
             $sth = $db->prepare($query);
         } catch (PDOException $e) {
-            throw new Exception('sqlauth:' . $this->authId .
-                                ': - Failed to prepare query: ' . $e->getMessage());
+            throw new Exception(sprintf(
+                'sqlauth:%s: - Failed to prepare query: %s',
+                $this->authId,
+                $e->getMessage(),
+            ));
         }
 
         try {
             $sth->execute($params);
         } catch (PDOException $e) {
-            throw new Exception('sqlauth:' . $this->authId .
-                                ': - Failed to execute query: ' . $e->getMessage());
+            throw new Exception(sprintf(
+                'sqlauth:%s: - Failed to execute query: %s',
+                $this->authId,
+                $e->getMessage(),
+            ));
         }
 
         try {
             $data = $sth->fetchAll(PDO::FETCH_ASSOC);
             return $data;
         } catch (PDOException $e) {
-            throw new Exception('sqlauth:' . $this->authId .
-                                ': - Failed to fetch result set: ' . $e->getMessage());
+            throw new Exception(sprintf(
+                'sqlauth:%s: - Failed to fetch result set: %s',
+                $this->authId,
+                $e->getMessage(),
+            ));
+        } finally {
+            unset($sth);
         }
     }
 
@@ -429,8 +526,11 @@ class SQL2 extends UserPassBase
             * authenticate hashed passwords that are only stored in the database. */
         $hashColumn = $queryConfig['password_verify_hash_column'];
         if (!array_key_exists($hashColumn, $data[0])) {
-            Logger::error('sqlauth:' . $this->authId . ': Auth query ' . $queryname .
-                            ' did not return expected hash column \'' . $hashColumn . '\'');
+            Logger::error(sprintf(
+                'sqlauth:%s: Auth query %s did not return expected hash column \'' . $hashColumn . '\'',
+                $this->authId,
+                $queryname,
+            ));
             throw new Error\Error('WRONGUSERPASS');
         }
 
@@ -465,15 +565,21 @@ class SQL2 extends UserPassBase
         }
 
         if (($passwordHash == null) || (!password_verify($password, $passwordHash))) {
-            Logger::error('sqlauth:' . $this->authId . ': Auth query ' . $queryname .
-                            ' password verification failed');
+            Logger::error(sprintf(
+                'sqlauth:%s: Auth query %s password verification failed',
+                $this->authId,
+                $queryname,
+            ));
             /* Authentication with verify_password() failed, however that only means that
                 * this auth query did not succeed. We should try the next auth query if any. */
             return false;
         }
 
-        Logger::debug('sqlauth:' . $this->authId . ': Auth query ' . $queryname .
-                        ' password verification using password_verify() succeeded');
+        Logger::debug(sprintf(
+            'sqlauth:%s: Auth query %s password verification using password_verify() succeeded',
+            $this->authId,
+            $queryname,
+        ));
         return true;
     }
 
@@ -507,9 +613,13 @@ class SQL2 extends UserPassBase
                 array_key_exists('username_regex', $queryConfig) &&
                 !preg_match($queryConfig['username_regex'], $username)
             ) {
-                Logger::debug('sqlauth:' . $this->authId . ': Skipping auth query ' . $queryname .
-                             ' because username ' . $username . ' does not match username_regex ' .
-                             $queryConfig['username_regex']);
+                Logger::debug(sprintf(
+                    'sqlauth:%s: Skipping auth query %s because username %s does not match username_regex %s',
+                    $this->authId,
+                    $queryname,
+                    $username,
+                    $queryConfig['username_regex'],
+                ));
                 continue;
             }
 
@@ -525,8 +635,12 @@ class SQL2 extends UserPassBase
                 }
                 $data = $this->executeQuery($db, $queryConfig['query'], $sqlParams);
             } catch (PDOException $e) {
-                Logger::error('sqlauth:' . $this->authId . ': Auth query ' . $queryname .
-                              ' failed with error: ' . $e->getMessage());
+                Logger::error(sprintf(
+                    'sqlauth:%s: Auth query %s failed with error: %s',
+                    $this->authId,
+                    $queryname,
+                    $e->getMessage(),
+                ));
                 continue;
             }
 
@@ -536,8 +650,12 @@ class SQL2 extends UserPassBase
                 ((array_key_exists('password_verify_hash_column', $queryConfig) === false) ||
                     $this->authenticatePasswordVerifyHash($queryname, $queryConfig, $data, $password))
             ) {
-                Logger::debug('sqlauth:' . $this->authId . ': Auth query ' . $queryname .
-                             ' succeeded with ' . count($data) . ' rows');
+                Logger::debug(sprintf(
+                    'sqlauth:%s: Auth query %s succeeded with %d rows',
+                    $this->authId,
+                    $queryname,
+                    count($data),
+                ));
                 $queryConfig['_winning_auth_query'] = true;
 
                 if (array_key_exists('extract_userid_from', $queryConfig)) {
@@ -554,14 +672,20 @@ class SQL2 extends UserPassBase
                 // The first auth query that succeeds is the winning one, so we can stop here.
                 break;
             } else {
-                Logger::debug('sqlauth:' . $this->authId . ': Auth query ' . $queryname .
-                             ' returned no rows, trying next auth query if any');
+                Logger::debug(sprintf(
+                    'sqlauth:%s: Auth query %s returned no rows, trying next auth query if any',
+                    $this->authId,
+                    $queryname,
+                ));
             }
         }
 
         if (empty($attributes)) {
             // No auth query succeeded
-            Logger::error('sqlauth:' . $this->authId . ': No auth query succeeded. Probably wrong username/password.');
+            Logger::error(sprintf(
+                'sqlauth:%s: No auth query succeeded. Probably wrong username/password.',
+                $this->authId,
+            ));
             throw new Error\Error('WRONGUSERPASS');
         }
 
@@ -569,19 +693,25 @@ class SQL2 extends UserPassBase
         foreach ($this->attributesQueries as $attrQueryConfig) {
             // If the attribute query is limited to certain auth queries, check if the winning auth query
             // is one of those.
-            Logger::debug(
-                'sqlauth:' . $this->authId . ': ' .
-                'Considering attribute query ' . $attrQueryConfig['query'] .
-                ' for winning auth query ' . $winningAuthQuery .
-                ' with only_for_auth ' . implode(',', $attrQueryConfig['only_for_auth'] ?? []),
-            );
+            Logger::debug(sprintf(
+                'sqlauth:%s: Considering attribute query \'%s\' for winning auth query \'%s\''
+                . ' with only_for_auth \'%s\'',
+                $this->authId,
+                $attrQueryConfig['query'],
+                $winningAuthQuery,
+                implode(',', $attrQueryConfig['only_for_auth'] ?? []),
+            ));
 
             if (
                 (!array_key_exists('only_for_auth', $attrQueryConfig)) ||
                 in_array($winningAuthQuery, $attrQueryConfig['only_for_auth'], true)
             ) {
-                Logger::debug('sqlauth:' . $this->authId . ': Running attribute query ' . $attrQueryConfig['query'] .
-                             ' for winning auth query ' . $winningAuthQuery);
+                Logger::debug(sprintf(
+                    'sqlauth:%s: Running attribute query \'%s\' for winning auth query \'%s\'',
+                    $this->authId,
+                    $attrQueryConfig['query'],
+                    $winningAuthQuery,
+                ));
 
                 $db = $this->connect($attrQueryConfig['database']);
 
@@ -591,31 +721,53 @@ class SQL2 extends UserPassBase
                         ['username' => $username];
                     $data = $this->executeQuery($db, $attrQueryConfig['query'], $params);
                 } catch (PDOException $e) {
-                    Logger::error('sqlauth:' . $this->authId . ': Attribute query ' . $attrQueryConfig['query'] .
-                                  ' failed with error: ' . $e->getMessage());
+                    Logger::error(sprintf(
+                        'sqlauth:%s: Attribute query \'%s\' failed with error: %s',
+                        $this->authId,
+                        $attrQueryConfig['query'],
+                        $e->getMessage(),
+                    ));
                     continue;
                 }
 
-                Logger::debug('sqlauth:' . $this->authId . ': Attribute query ' . $attrQueryConfig['query'] .
-                             ' returned ' . count($data) . ' rows');
+                Logger::debug(sprintf(
+                    'sqlauth:%s: Attribute query \'%s\' returned %d rows',
+                    $this->authId,
+                    $attrQueryConfig['query'],
+                    count($data),
+                ));
 
                 $this->extractAttributes($attributes, $data, []);
             } else {
-                Logger::debug('sqlauth:' . $this->authId . ': Skipping attribute query ' . $attrQueryConfig['query'] .
-                             ' because it does not apply to winning auth query ' . $winningAuthQuery);
+                Logger::debug(sprintf(
+                    'sqlauth:%s: Skipping attribute query \'%s\' because it does not apply'
+                    . ' to winning auth query \'%s\'',
+                    $this->authId,
+                    $attrQueryConfig['query'],
+                    $winningAuthQuery,
+                ));
             }
         }
 
         // At the end, disconnect from all databases
-        $db = null;
+        unset($db);
+
         foreach ($this->databases as $dbname => $dbConfig) {
             if ($dbConfig['_pdo'] !== null) {
                 $this->databases[$dbname]['_pdo'] = null;
-                Logger::debug('sqlauth:' . $this->authId . ': Disconnected from database ' . $dbname);
+                Logger::debug(sprintf(
+                    'sqlauth:%s: Disconnected from database %s',
+                    $this->authId,
+                    $dbname,
+                ));
             }
         }
 
-        Logger::info('sqlauth:' . $this->authId . ': Attributes: ' . implode(',', array_keys($attributes)));
+        Logger::info(sprintf(
+            'sqlauth:%s: Attributes: %s',
+            $this->authId,
+            implode(',', array_keys($attributes)),
+        ));
 
         return $attributes;
     }
