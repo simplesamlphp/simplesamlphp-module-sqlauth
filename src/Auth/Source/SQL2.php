@@ -123,7 +123,7 @@ class SQL2 extends UserPassBase
                         throw new Exception(sprintf(
                             'Expected parameter \'%s\' for authentication source %s to be a string. '
                             . 'Instead it was: %s',
-                            $dbname,
+                            $param,
                             $this->authId,
                             var_export($config[$param], true),
                         ));
@@ -177,7 +177,7 @@ class SQL2 extends UserPassBase
                 if (!is_array($authQueryConfig)) {
                     throw new Exception(sprintf(
                         'Each entry in the %s \'auth_queries\' parameter for authentication source '
-                        . '\'%s\' is expected to be an array. Instead it was: %s' .
+                        . '\'%s\' is expected to be an array. Instead it was: %s',
                         $authQueryName,
                         $this->authId,
                         var_export($authQueryConfig, true),
@@ -188,8 +188,8 @@ class SQL2 extends UserPassBase
                     if (!array_key_exists($param, $authQueryConfig)) {
                         throw new Exception(sprintf(
                             'Auth query %s is missing required attribute \'%s\' for authentication source \'%s\'',
-                            $param,
                             $authQueryName,
+                            $param,
                             $this->authId,
                         ));
                     }
@@ -279,7 +279,7 @@ class SQL2 extends UserPassBase
                 if (!is_array($attrQueryConfig)) {
                     throw new Exception(sprintf(
                         '\'attr_queries\' parameter for authentication source \'%s\''
-                        . ' is expected to be an array. Instead it was: %s' .
+                        . ' is expected to be an array. Instead it was: %s',
                         $this->authId,
                         var_export($attrQueryConfig, true),
                     ));
